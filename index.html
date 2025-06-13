@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Freelance Rate Calculator</title>
+    <meta
+      name="description"
+      content="Calculate how much you should charge for freelance software engineering jobs."
+    />
+    <link rel="stylesheet" href="rate-calculator.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>Freelance Rate Calculator</h1>
+        <p class="subtitle">
+          Calculate your optimal pricing for software engineering freelance work
+        </p>
+      </header>
+
+      <main class="main-layout">
+        <!-- Left Panel - Parameters -->
+        <div class="parameters-panel">
+          <div class="calculator-card">
+            <div class="card-header">
+              <h2>You are calculating your freelancer rates</h2>
+              <p class="card-subtitle">
+                Play around to find how much you should charge for your work.
+              </p>
+            </div>
+
+            <form id="rate-calculator-form" class="calculator-form">
+              <!-- Work Days -->
+              <div class="form-row">
+                <div class="form-group col-sm-3">
+                  <label for="year-work-days">Work Days per Year</label>
+                  <input
+                    type="number"
+                    id="year-work-days"
+                    class="form-control user-entry"
+                    placeholder="e.g. 231"
+                    value="231"
+                  />
+                  <small class="form-text"
+                    >Typical working days in a year</small
+                  >
+                </div>
+              </div>
+
+              <!-- Monthly/Annual Expenses -->
+              <div class="form-row">
+                <div class="form-group col-sm-6">
+                  <label for="monthly-expenses">Monthly Expenses</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    id="monthly-expenses"
+                    class="form-control user-entry"
+                    placeholder="e.g. 5000"
+                  />
+                  <small class="form-text"
+                    >Your monthly living and business costs</small
+                  >
+                </div>
+                <div class="form-group col-sm-6">
+                  <label for="annual-cost">Total Annual Income Needed</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    id="annual-cost"
+                    class="form-control readonly"
+                    readonly
+                    tabindex="-1"
+                  />
+                  <small class="form-text"
+                    >Includes expenses + savings + extra + taxes</small
+                  >
+                </div>
+              </div>
+
+              <!-- Savings -->
+              <div class="form-row">
+                <div class="form-group col-sm-2">
+                  <label for="savings-percentage">Savings %</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    id="savings-percentage"
+                    class="form-control user-entry"
+                    placeholder="20"
+                  />
+                  <small class="form-text">For the future</small>
+                </div>
+                <div class="form-group col-sm-5">
+                  <label for="savings-value-monthly">Savings/Month</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    id="savings-value-monthly"
+                    class="form-control readonly"
+                    readonly
+                    tabindex="-1"
+                  />
+                </div>
+                <div class="form-group col-sm-5">
+                  <label for="savings-value-yearly">Savings/Year</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    id="savings-value-yearly"
+                    class="form-control readonly"
+                    readonly
+                    tabindex="-1"
+                  />
+                </div>
+              </div>
+
+              <!-- Extra/Personal -->
+              <div class="form-row">
+                <div class="form-group col-sm-2">
+                  <label for="extra-percentage">Extra %</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    id="extra-percentage"
+                    class="form-control user-entry"
+                    placeholder="10"
+                  />
+                  <small class="form-text">Your pleasure money</small>
+                </div>
+                <div class="form-group col-sm-5">
+                  <label for="extra-value-monthly">Extra/Month</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    id="extra-value-monthly"
+                    class="form-control readonly"
+                    readonly
+                    tabindex="-1"
+                  />
+                </div>
+                <div class="form-group col-sm-5">
+                  <label for="extra-value-yearly">Extra/Year</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    id="extra-value-yearly"
+                    class="form-control readonly"
+                    readonly
+                    tabindex="-1"
+                  />
+                </div>
+              </div>
+
+              <!-- Taxes -->
+              <div class="form-row">
+                <div class="form-group col-sm-2">
+                  <label for="taxes-percentage">Taxes %</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    id="taxes-percentage"
+                    class="form-control user-entry"
+                    placeholder="25"
+                  />
+                  <small class="form-text">Pay your taxes</small>
+                </div>
+                <div class="form-group col-sm-5">
+                  <label for="taxes-value-monthly">Taxes/Month</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    id="taxes-value-monthly"
+                    class="form-control readonly"
+                    readonly
+                    tabindex="-1"
+                  />
+                </div>
+                <div class="form-group col-sm-5">
+                  <label for="taxes-value-yearly">Taxes/Year</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    id="taxes-value-yearly"
+                    class="form-control readonly"
+                    readonly
+                    tabindex="-1"
+                  />
+                </div>
+              </div>
+
+              <!-- Multiplier Factors -->
+              <div class="form-row">
+                <div class="form-group col-sm-4">
+                  <label for="revision-factor">Revision Factor %</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    id="revision-factor"
+                    class="form-control user-entry"
+                    placeholder="25"
+                  />
+                  <small class="form-text">Get it right</small>
+                </div>
+                <div class="form-group col-sm-4">
+                  <label for="rush-factor">Rush Factor %</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    id="rush-factor"
+                    class="form-control user-entry"
+                    placeholder="50"
+                  />
+                  <small class="form-text">Add coffee</small>
+                </div>
+                <div class="form-group col-sm-4">
+                  <label for="asshole-factor">Difficult Client Factor %</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    id="asshole-factor"
+                    class="form-control user-entry"
+                    placeholder="100"
+                  />
+                  <small class="form-text">Pain & suffering</small>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Right Panel - Fixed Results -->
+        <div class="results-panel">
+          <div class="results-section">
+            <h3>How much you should charge</h3>
+            <div class="results-table-container">
+              <table class="results-table">
+                <thead>
+                  <tr>
+                    <th>Rate Type</th>
+                    <th>Per Day</th>
+                    <th>Per Hour</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Regular</td>
+                    <td class="currency" id="per-day">-</td>
+                    <td class="currency" id="per-hour">-</td>
+                  </tr>
+                  <tr>
+                    <td>Revision</td>
+                    <td class="currency" id="per-revision-day">-</td>
+                    <td class="currency" id="per-revision-hour">-</td>
+                  </tr>
+                  <tr>
+                    <td>Rush Job</td>
+                    <td class="currency" id="per-rush-day">-</td>
+                    <td class="currency" id="per-rush-hour">-</td>
+                  </tr>
+                  <tr class="highlight">
+                    <td>Difficult Client</td>
+                    <td class="currency" id="per-asshole-day">-</td>
+                    <td class="currency" id="per-asshole-hour">-</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Revenue Calculator -->
+            <div class="revenue-section">
+              <h4>Revenue Calculator</h4>
+              <div class="form-row">
+                <div class="form-group col-sm-6">
+                  <label for="work-hours">Hours per Day</label>
+                  <input
+                    type="number"
+                    step="0.5"
+                    id="work-hours"
+                    class="form-control user-entry"
+                    value="8"
+                    min="1"
+                    max="16"
+                  />
+                </div>
+                <div class="form-group col-sm-6">
+                  <label for="work-days">Days per Week</label>
+                  <input
+                    type="number"
+                    step="0.5"
+                    id="work-days"
+                    class="form-control user-entry"
+                    value="5"
+                    min="1"
+                    max="7"
+                  />
+                </div>
+              </div>
+
+              <div class="revenue-display">
+                <h5>Potential Revenue (Regular Rate)</h5>
+                <div class="revenue-grid">
+                  <div class="revenue-item">
+                    <span class="revenue-label">Daily:</span>
+                    <span class="revenue-value" id="revenue-daily">-</span>
+                  </div>
+                  <div class="revenue-item">
+                    <span class="revenue-label">Weekly:</span>
+                    <span class="revenue-value" id="revenue-weekly">-</span>
+                  </div>
+                  <div class="revenue-item">
+                    <span class="revenue-label">Monthly:</span>
+                    <span class="revenue-value" id="revenue-monthly">-</span>
+                  </div>
+                  <div class="revenue-item">
+                    <span class="revenue-label">Yearly:</span>
+                    <span class="revenue-value" id="revenue-yearly">-</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="disclaimer">
+              <p>
+                <strong>Important:</strong> These values are suggestions for the
+                MINIMUM values you should charge to compete on the freelance
+                market while being able to pay your bills. We strongly recommend
+                that you do your own research on freelance rates in your region
+                according to your skill set.
+              </p>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script src="rate-calculator.js"></script>
+  </body>
+</html>
