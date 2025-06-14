@@ -30,8 +30,8 @@ Criar uma calculadora de preços inteligente para freelancers brasileiros que tr
 - ✅ Tailwind CSS
 - ✅ Responsive design
 - ✅ Hono (API framework)
-- 🔴 Cloudflare Pages (frontend hosting)
-- 🔴 Cloudflare Workers (API hosting)
+- ✅ Cloudflare Pages (frontend hosting) - freelaz.com LIVE
+- ✅ Cloudflare Workers (API hosting) - brazilian-rate-calculator-api.programad.workers.dev
 - 🔴 D1 Database (SQLite)
 - 🔴 GitHub Actions (CI/CD)
 
@@ -137,6 +137,8 @@ Criar uma calculadora de preços inteligente para freelancers brasileiros que tr
 
 - ✅ LocalStorage para configurações
 - ✅ Funcionalidade de compartilhamento básica
+- ✅ Body scroll lock em modais
+- ✅ Portal-based dropdowns (sem clipping)
 - 🔴 Múltiplos perfis
 - 🔴 Histórico de cálculos
 - 🔴 Backup na nuvem
@@ -153,10 +155,10 @@ Criar uma calculadora de preços inteligente para freelancers brasileiros que tr
 
 **Cloudflare Workers:**
 
-- 🔴 Worker para hospedar aplicação Vite
-- 🔴 Worker para API backend
-- 🔴 CDN global para performance
-- 🔴 HTTPS automático
+- ✅ Worker para hospedar aplicação Vite (via Pages)
+- ✅ Worker para API backend - brazilian-rate-calculator-api.programad.workers.dev
+- ✅ CDN global para performance
+- ✅ HTTPS automático
 - 🔴 Rate limiting e proteção
 
 **Banco de Dados D1:**
@@ -277,12 +279,12 @@ Criar uma calculadora de preços inteligente para freelancers brasileiros que tr
 
 ## 📈 PRIORIZAÇÃO DE FASES
 
-### 🥇 FASE CRÍTICA (Deploy Ready)
+### 🥇 FASE CRÍTICA (Deploy Ready) ✅ COMPLETA
 
-- 🔴 Cloudflare Workers setup
-- 🔴 Deploy da aplicação atual
-- 🔴 Domínio customizado
-- 🔴 Analytics básico
+- ✅ Cloudflare Workers setup
+- ✅ Deploy da aplicação atual
+- ✅ Domínio customizado - freelaz.com
+- ✅ Analytics básico - Google Analytics G-WXQN6BW8QT
 
 ### 🥈 FASE ESSENCIAL (Market Intelligence)
 
@@ -307,5 +309,11 @@ Criar uma calculadora de preços inteligente para freelancers brasileiros que tr
 
 ---
 
-_Última atualização: 2024_
-_Status: ✅ Base sólida implementada - Pronto para deploy cloud_
+_Última atualização: Dezembro 2024_
+_Status: ✅ FASE CRÍTICA COMPLETA - Aplicação LIVE em produção_
+
+**🚀 DEPLOYED URLS:**
+
+- **Frontend**: https://freelaz.com (Cloudflare Pages)
+- **API**: https://brazilian-rate-calculator-api.programad.workers.dev (Cloudflare Workers)
+- **Analytics**: Google Analytics G-WXQN6BW8QT ativo
