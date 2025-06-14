@@ -4,7 +4,9 @@
 
 ### 🎯 Objetivo Principal
 
-Criar uma calculadora de preços inteligente para freelancers brasileiros que trabalham com clientes americanos, considerando custos locais em BRL e recebimento em USD.
+Criar uma **plataforma de inteligência de mercado** para freelancers brasileiros que trabalham com clientes americanos, evoluindo de uma calculadora gratuita para uma **comunidade que compartilha dados anônimos** de preços, gerando insights valiosos sobre o mercado Brasil-USA.
+
+**Visão de Produto**: "Glassdoor para Freelancers Brasileiros" com estimativa colaborativa de projetos.
 
 ---
 
@@ -163,8 +165,9 @@ Criar uma calculadora de preços inteligente para freelancers brasileiros que tr
 
 **Banco de Dados D1:**
 
-- 🔴 Schema para dados anônimos
-- 🔴 Tabelas: user_calculations, market_data, regional_stats
+- 🔴 Schema para dados anônimos de mercado
+- 🔴 Tabelas: users, rate_submissions, calculation_sessions, project_estimates
+- 🔴 Better Auth integration com Google OAuth2
 - 🔴 Índices para queries eficientes
 - 🔴 Backup e versionamento
 - 🔴 Migrations automáticas
@@ -213,22 +216,38 @@ Criar uma calculadora de preços inteligente para freelancers brasileiros que tr
 - 🔴 Análise de proposta vs. custo
 - 🔴 Recomendações de ajuste
 
-### 🎮 GAMIFICAÇÃO E ENGAGEMENT
+### 🤝 COMUNIDADE E INTELIGÊNCIA COLETIVA
+
+**Coleta de Dados da Comunidade:**
+
+- 🔴 Prompt opcional pós-cálculo: "Compartilhe dados anonimamente"
+- 🔴 Submissão de taxas reais vs. calculadas
+- 🔴 Dados regionais (estado/cidade) e profissão
+- 🔴 Tipo de cliente (Brasil vs. USA) e projeto
+- 🔴 Incentivo: acesso a médias regionais
+
+**Estimativa Colaborativa de Projetos:**
+
+- 🔴 "Quanto cobrar?" - descrição de projeto + votação da comunidade
+- 🔴 Interface Tinder-style para estimativas rápidas
+- 🔴 Sistema de votação tipo agile poker
+- 🔴 Consenso da comunidade com pesos por experiência
+- 🔴 Gamificação: pontos por estimativas precisas
 
 **Sistema de Conquistas:**
 
 - 🔴 Objetivos de crescimento
-- 🔴 Badges por milestones
-- 🔴 Comparação anônima com peers
-- 🔴 Desafios mensais
-- 🔴 Ranking de freelancers
+- 🔴 Badges por contribuições à comunidade
+- 🔴 Comparação anônima com peers regionais
+- 🔴 Ranking de melhores estimadores
+- 🔴 Streaks de participação
 
 **Personalização Avançada:**
 
 - 🔴 Perfil inteligente com histórico
-- 🔴 Sugestões baseadas em ML
-- 🔴 Metas personalizadas
-- 🔴 Alertas e notificações
+- 🔴 Sugestões baseadas em dados da comunidade
+- 🔴 Metas personalizadas vs. mercado
+- 🔴 Alertas de tendências regionais
 
 ### 📱 MOBILE E PWA
 
@@ -247,6 +266,27 @@ Criar uma calculadora de preços inteligente para freelancers brasileiros que tr
 - 🔴 Vibração em interações
 - 🔴 Teclado otimizado para inputs
 
+### 💰 ESTRATÉGIA DE MONETIZAÇÃO
+
+**Modelo Freemium:**
+
+- ✅ **Calculadora sempre gratuita** (garantir acesso livre)
+- 🔴 **Premium Analytics** (R$ 29-49/mês):
+  - Heatmaps regionais detalhados
+  - Análise de tendências e sazonalidade
+  - Posicionamento pessoal vs. mercado
+  - Relatórios customizados para propostas
+- 🔴 **Community Pro** (R$ 99/mês):
+  - Estimativas ilimitadas de projetos
+  - Acesso prioritário a dados em tempo real
+  - Dashboard avançado de oportunidades
+
+**Monetização Futura:**
+
+- 🔴 **Marketplace** (comissão 5-10%): conexão projeto-freelancer
+- 🔴 **Enterprise** (R$ 299/mês): analytics para agências/times
+- 🔴 **White-label**: licenciamento para outras plataformas
+
 ---
 
 ## 🎯 MÉTRICAS DE SUCESSO
@@ -260,24 +300,26 @@ Criar uma calculadora de preços inteligente para freelancers brasileiros que tr
 - 🔴 PWA: Lighthouse score 95+
 - 🔴 SEO: Score 90+
 
-### Usuário
+### Usuário & Comunidade
 
-- 🔴 Adoption: 5000+ usuários em 6 meses
-- 🔴 Engagement: 80% retorno em 30 dias
-- 🔴 Data Consent: 30% opt-in para coleta
-- 🔴 Satisfaction: 4.7+ estrelas
-- 🔴 Business Impact: 50% usam preços sugeridos
+- 🔴 **Adoption**: 5000+ usuários em 6 meses
+- 🔴 **Engagement**: 80% retorno em 30 dias
+- 🔴 **Data Sharing**: 30% opt-in para coleta de dados
+- 🔴 **Community**: 1000+ submissões de dados/mês
+- 🔴 **Premium**: 50+ assinantes pagos em 6 meses
+- 🔴 **Satisfaction**: 4.7+ estrelas
 
-### Analytics de Mercado
+### Inteligência de Mercado
 
-- 🔴 1000+ cálculos coletados/mês
-- 🔴 Médias 90% mais precisas
-- 🔴 12 regiões com dados para IA
-- 🔴 6 profissões com benchmarks
+- 🔴 **Cobertura**: dados de 12+ regiões brasileiras
+- 🔴 **Profissões**: 6+ áreas com benchmarks confiáveis
+- 🔴 **Precisão**: médias 90% mais precisas que estimativas
+- 🔴 **Volume**: 1000+ cálculos coletados/mês
+- 🔴 **Estimativas**: 500+ projetos avaliados pela comunidade/mês
 
 ---
 
-## 📈 PRIORIZAÇÃO DE FASES
+## 📈 PRIORIZAÇÃO DE FASES - ESTRATÉGIA COMUNIDADE
 
 ### 🥇 FASE CRÍTICA (Deploy Ready) ✅ COMPLETA
 
@@ -286,31 +328,50 @@ Criar uma calculadora de preços inteligente para freelancers brasileiros que tr
 - ✅ Domínio customizado - freelaz.com
 - ✅ Analytics básico - Google Analytics G-WXQN6BW8QT
 
-### 🥈 FASE ESSENCIAL (Market Intelligence)
+### 🥈 FASE FOUNDATION (Auth + Data Collection) - **PRÓXIMA PRIORIDADE**
 
-- 🔴 D1 Database e coleta de dados
-- 🔴 Modal LGPD
+**Timeline: 2-3 semanas**
+
+- 🔴 **Better Auth** + Google OAuth2 integration
+- 🔴 **D1 Database** com schema para coleta de dados
+- 🔴 **Modal LGPD** compliant para consentimento
+- 🔴 **Prompt pós-cálculo**: "Compartilhe dados anonimamente"
+- 🔴 Armazenamento de rate_submissions e calculation_sessions
+
+### 🥉 FASE COMMUNITY DATA (Market Intelligence)
+
+**Timeline: 1-2 meses**
+
+- 🔴 **Dashboard analytics** com médias regionais
+- 🔴 **Freemium gates**: dados básicos grátis, detalhados pagos
+- 🔴 **Subscription system**: Stripe + PIX para brasileiros
+- 🔴 **Premium features**: heatmaps regionais, trends
 - 🔴 APIs externas (IBGE, backup câmbio)
-- 🔴 Relatórios PDF funcionais
 
-### 🥉 FASE AVANÇADA (AI & Advanced Features)
+### 🏆 FASE COLLABORATIVE (Project Estimates)
 
-- 🔴 Machine Learning para precificação
-- 🔴 Planejamento tributário
-- 🔴 Gamificação
-- 🔴 PWA completo
+**Timeline: 2-3 meses**
 
-### 🏆 FASE PREMIUM (Market Leader)
+- 🔴 **"Quanto cobrar?"** - feature de estimativa de projetos
+- 🔴 **Tinder-style voting** para estimativas rápidas
+- 🔴 **Agile poker system** com consensus da comunidade
+- 🔴 **Gamificação**: pontos, badges, ranking de estimadores
+- 🔴 **Community Pro** tier com features avançadas
 
-- 🔴 Consultoria de precificação
-- 🔴 Integrações com ferramentas
-- 🔴 API pública para terceiros
-- 🔴 Marketplace de freelancers
+### 🚀 FASE PREMIUM (Marketplace & Scale)
+
+**Timeline: 6+ meses**
+
+- 🔴 **Marketplace**: conexão freelancer-projeto
+- 🔴 **Enterprise**: analytics para agências/times
+- 🔴 **API pública** para terceiros
+- 🔴 **White-label** para outras plataformas brasileiras
 
 ---
 
-_Última atualização: Dezembro 2024_
+_Última atualização: Janeiro 2025_
 _Status: ✅ FASE CRÍTICA COMPLETA - Aplicação LIVE em produção_
+_Próxima Fase: 🥈 FOUNDATION - Better Auth + Coleta de Dados da Comunidade_
 
 **🚀 DEPLOYED URLS:**
 
