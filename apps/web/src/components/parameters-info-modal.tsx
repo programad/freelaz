@@ -4,6 +4,7 @@ import {
   multiplierExplanation,
   type StateKey,
 } from "@brazilian-rate-calculator/shared";
+import { useBodyScrollLock } from "../hooks/use-body-scroll-lock";
 
 interface ParametersInfoModalProps {
   isOpen: boolean;
@@ -16,6 +17,9 @@ export function ParametersInfoModal({
   onClose,
   currentState,
 }: ParametersInfoModalProps) {
+  // Lock body scroll when modal is open
+  useBodyScrollLock(isOpen);
+
   if (!isOpen) return null;
 
   const currentStateData = stateData[currentState];

@@ -5,6 +5,8 @@ import {
   type StateKey,
 } from "@brazilian-rate-calculator/shared";
 import { SearchableStateDropdown } from "./searchable-state-dropdown";
+import { CustomDropdown } from "./custom-dropdown";
+import { useBodyScrollLock } from "../hooks/use-body-scroll-lock";
 
 interface ConfigurationModalProps {
   isOpen: boolean;
@@ -39,7 +41,26 @@ export function ConfigurationModal({
   vacationDays,
   setVacationDays,
 }: ConfigurationModalProps) {
+  // Lock body scroll when modal is open
+  useBodyScrollLock(isOpen);
+
   if (!isOpen) return null;
+
+  // Prepare profession options
+  const professionOptions = Object.entries(professionData).map(
+    ([key, prof]) => ({
+      value: key,
+      label: prof.name.pt,
+    })
+  );
+
+  // Prepare experience level options
+  const experienceOptions = [
+    { value: "junior", label: "Júnior (0-2 anos)" },
+    { value: "pleno", label: "Pleno (2-5 anos)" },
+    { value: "senior", label: "Sênior (5+ anos)" },
+    { value: "specialist", label: "Especialista (8+ anos)" },
+  ];
 
   return (
     <div
@@ -47,10 +68,10 @@ export function ConfigurationModal({
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl p-6 max-w-2xl w-full mx-4 shadow-2xl max-h-[90vh] overflow-y-auto"
+        className="bg-white rounded-2xl p-6 max-w-2xl w-full mx-4 shadow-2xl max-h-[90vh] overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex justify-between items-center mb-6 flex-shrink-0">
           <h2 className="text-2xl font-bold">⚙️ Configurações Avançadas</h2>
           <button
             onClick={onClose}
@@ -60,7 +81,7 @@ export function ConfigurationModal({
           </button>
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-6 overflow-y-auto flex-1 pr-2 -mr-2">
           {/* Profile Settings */}
           <div className="space-y-4">
             {/* Profession - Full Width */}
@@ -68,17 +89,13 @@ export function ConfigurationModal({
               <label className="block text-sm font-semibold mb-2">
                 Profissão:
               </label>
-              <select
+              <CustomDropdown
                 value={profession}
-                onChange={(e) => setProfession(e.target.value as ProfessionKey)}
-                className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all text-base leading-6 min-h-[3.5rem]"
-              >
-                {Object.entries(professionData).map(([key, prof]) => (
-                  <option key={key} value={key}>
-                    {prof.name.pt}
-                  </option>
-                ))}
-              </select>
+                onChange={(value) => setProfession(value as ProfessionKey)}
+                options={professionOptions}
+                placeholder="Selecione uma profissão"
+                searchable={true}
+              />
             </div>
 
             {/* State and Experience - Two Columns */}
@@ -94,18 +111,14 @@ export function ConfigurationModal({
                 <label className="block text-sm font-semibold mb-2">
                   Experiência:
                 </label>
-                <select
+                <CustomDropdown
                   value={experienceLevel}
-                  onChange={(e) =>
-                    setExperienceLevel(e.target.value as ExperienceLevel)
+                  onChange={(value) =>
+                    setExperienceLevel(value as ExperienceLevel)
                   }
-                  className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all text-base leading-6 min-h-[3.5rem]"
-                >
-                  <option value="junior">Júnior (0-2 anos)</option>
-                  <option value="pleno">Pleno (2-5 anos)</option>
-                  <option value="senior">Sênior (5+ anos)</option>
-                  <option value="specialist">Especialista (8+ anos)</option>
-                </select>
+                  options={experienceOptions}
+                  placeholder="Selecione o nível"
+                />
               </div>
             </div>
           </div>
@@ -157,21 +170,21 @@ export function ConfigurationModal({
               </div>
             </div>
           </div>
+        </div>
 
-          <div className="flex gap-4">
-            <button
-              onClick={onClose}
-              className="flex-1 bg-gradient-to-r from-blue-600 to-purple-700 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition-all transform hover:scale-105"
-            >
-              ✅ Aplicar e Fechar
-            </button>
-            <button
-              onClick={onClose}
-              className="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-all"
-            >
-              Cancelar
-            </button>
-          </div>
+        <div className="flex gap-4 mt-6 flex-shrink-0">
+          <button
+            onClick={onClose}
+            className="flex-1 bg-gradient-to-r from-blue-600 to-purple-700 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition-all transform hover:scale-105"
+          >
+            ✅ Aplicar e Fechar
+          </button>
+          <button
+            onClick={onClose}
+            className="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-all"
+          >
+            Cancelar
+          </button>
         </div>
       </div>
     </div>

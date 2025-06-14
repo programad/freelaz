@@ -1,4 +1,5 @@
 import { formatCurrency } from "@brazilian-rate-calculator/shared";
+import { useBodyScrollLock } from "../hooks/use-body-scroll-lock";
 
 interface CalculationModalProps {
   isOpen: boolean;
@@ -44,6 +45,9 @@ export function CalculationModal({
   baseRate,
   rates,
 }: CalculationModalProps) {
+  // Lock body scroll when modal is open
+  useBodyScrollLock(isOpen);
+
   if (!isOpen) return null;
 
   return (
