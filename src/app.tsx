@@ -9,6 +9,10 @@ import { formatCurrency } from "./utils/text-utils";
 import { ConfigurationModal } from "./components/configuration-modal";
 import { CalculationModal } from "./components/calculation-modal";
 import { ParametersInfoModal } from "./components/parameters-info-modal";
+import {
+  GoogleAnalytics,
+  useGoogleAnalytics,
+} from "./components/google-analytics";
 
 function App() {
   const [showWizard, setShowWizard] = useState(false);
@@ -16,6 +20,11 @@ function App() {
   const [showParameters, setShowParameters] = useState(false);
   const [exchangeRate, setExchangeRate] = useState(5.57);
   const [lastUpdated, setLastUpdated] = useState("Taxa padrão");
+
+  // Google Analytics
+  const { trackEvent } = useGoogleAnalytics();
+  const gaId = import.meta.env.ANALYTICS_ID;
+  const isDevelopment = import.meta.env.DEV;
 
   // Form data - matching the original exactly
   const [profession, setProfession] = useState<ProfessionKey>("fullstack");
@@ -94,6 +103,9 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-900 p-6">
+      {/* Google Analytics */}
+      <GoogleAnalytics measurementId={gaId} debug={isDevelopment} />
+
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <header className="text-center mb-8 text-white">
@@ -397,6 +409,15 @@ function App() {
                     "brazilianRateCalculatorConfig",
                     JSON.stringify(config)
                   );
+
+                  // Track save event
+                  trackEvent("save_configuration", {
+                    profession,
+                    state,
+                    experience_level: experienceLevel,
+                    hourly_rate: Math.round(baseRate),
+                  });
+
                   alert("Configuração salva com sucesso!");
                 }}
                 className="bg-gradient-to-r from-blue-600 to-purple-700 text-white px-4 py-3 rounded-lg font-semibold hover:shadow-lg transition-all transform hover:scale-105"
@@ -411,8 +432,18 @@ function App() {
                     rates.regular / exchangeRate,
                     "USD"
                   )}/hora)\n\nCalculado com a Calculadora de Preços para Freelancers Brasileiros`;
-                  if (navigator.share) {
-                    navigator.share({
+
+                  // Track share event
+                  trackEvent("share_results", {
+                    method: (navigator as any).share
+                      ? "native_share"
+                      : "clipboard",
+                    hourly_rate_brl: Math.round(rates.regular),
+                    hourly_rate_usd: Math.round(rates.regular / exchangeRate),
+                  });
+
+                  if ((navigator as any).share) {
+                    (navigator as any).share({
                       title: "Minha Taxa de Freelancer",
                       text,
                       url: window.location.href,
