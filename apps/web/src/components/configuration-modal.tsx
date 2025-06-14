@@ -125,9 +125,20 @@ export function ConfigurationModal({
 
           {/* Work Configuration */}
           <div>
-            <h3 className="text-lg font-bold mb-4">
-              ⏰ Configuração de Trabalho
-            </h3>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-bold">⏰ Configuração de Trabalho</h3>
+              <button
+                onClick={() => {
+                  // Reset to default values
+                  setWorkHours(8);
+                  setWorkDays(5);
+                  setVacationDays(30);
+                }}
+                className="text-xs px-3 py-1 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-all"
+              >
+                🔄 Resetar
+              </button>
+            </div>
             <div className="grid grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-semibold mb-2">

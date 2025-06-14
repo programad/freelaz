@@ -164,6 +164,20 @@ function App() {
                   type="number"
                   value={monthlyExpenses}
                   onChange={(e) => setMonthlyExpenses(Number(e.target.value))}
+                  onFocus={(e) => {
+                    // Use setTimeout to ensure selection happens after React's event handling
+                    setTimeout(
+                      () => (e.target as HTMLInputElement).select(),
+                      0
+                    );
+                  }}
+                  onClick={(e) => {
+                    // Also select on click for better UX
+                    setTimeout(
+                      () => (e.target as HTMLInputElement).select(),
+                      0
+                    );
+                  }}
                   className="flex-1 px-4 py-4 border-2 border-gray-300 rounded-r-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all text-lg font-semibold"
                   placeholder="2000"
                 />
@@ -174,59 +188,79 @@ function App() {
             </div>
 
             {/* Quick Adjustments */}
-            <div className="grid grid-cols-3 gap-4 mb-6">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Reserva (%)
-                </label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="range"
-                    min="0"
-                    max="50"
-                    value={savingsPercent}
-                    onChange={(e) => setSavingsPercent(Number(e.target.value))}
-                    className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-                  />
-                  <span className="bg-blue-100 text-blue-600 px-2 py-1 rounded font-semibold text-sm min-w-12 text-center">
-                    {savingsPercent}%
-                  </span>
-                </div>
+            <div className="mb-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-bold text-gray-800">
+                  ⚙️ Ajustes Rápidos
+                </h3>
+                <button
+                  onClick={() => {
+                    // Reset to default values
+                    setSavingsPercent(20);
+                    setExtraPercent(10);
+                    setTaxPercent(15);
+                  }}
+                  className="text-xs px-3 py-1 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-all"
+                >
+                  🔄 Resetar
+                </button>
               </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Extras (%)
-                </label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="range"
-                    min="0"
-                    max="30"
-                    value={extraPercent}
-                    onChange={(e) => setExtraPercent(Number(e.target.value))}
-                    className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-                  />
-                  <span className="bg-blue-100 text-blue-600 px-2 py-1 rounded font-semibold text-sm min-w-12 text-center">
-                    {extraPercent}%
-                  </span>
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Reserva (%)
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="range"
+                      min="0"
+                      max="50"
+                      value={savingsPercent}
+                      onChange={(e) =>
+                        setSavingsPercent(Number(e.target.value))
+                      }
+                      className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                    />
+                    <span className="bg-blue-100 text-blue-600 px-2 py-1 rounded font-semibold text-sm min-w-12 text-center">
+                      {savingsPercent}%
+                    </span>
+                  </div>
                 </div>
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Impostos (%)
-                </label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="range"
-                    min="0"
-                    max="40"
-                    value={taxPercent}
-                    onChange={(e) => setTaxPercent(Number(e.target.value))}
-                    className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-                  />
-                  <span className="bg-blue-100 text-blue-600 px-2 py-1 rounded font-semibold text-sm min-w-12 text-center">
-                    {taxPercent}%
-                  </span>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Extras (%)
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="range"
+                      min="0"
+                      max="30"
+                      value={extraPercent}
+                      onChange={(e) => setExtraPercent(Number(e.target.value))}
+                      className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                    />
+                    <span className="bg-blue-100 text-blue-600 px-2 py-1 rounded font-semibold text-sm min-w-12 text-center">
+                      {extraPercent}%
+                    </span>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Impostos (%)
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="range"
+                      min="0"
+                      max="40"
+                      value={taxPercent}
+                      onChange={(e) => setTaxPercent(Number(e.target.value))}
+                      className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                    />
+                    <span className="bg-blue-100 text-blue-600 px-2 py-1 rounded font-semibold text-sm min-w-12 text-center">
+                      {taxPercent}%
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
