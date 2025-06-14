@@ -94,6 +94,14 @@ const stateData = {
   to: { name: "Tocantins", costIndex: 55 },
 };
 
+// Helper function to normalize text for search (remove accents)
+const normalizeText = (text: string) => {
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+};
+
 function App() {
   const [showWizard, setShowWizard] = useState(false);
   const [showCalculation, setShowCalculation] = useState(false);
@@ -111,6 +119,8 @@ function App() {
   const [workHours, setWorkHours] = useState(8);
   const [workDays, setWorkDays] = useState(5);
   const [vacationDays, setVacationDays] = useState(30);
+  const [stateDropdownOpen, setStateDropdownOpen] = useState(false);
+  const [stateSearch, setStateSearch] = useState("");
 
   // Load exchange rate (matching original)
   useEffect(() => {
@@ -130,6 +140,24 @@ function App() {
     };
     fetchExchangeRate();
   }, []);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (stateDropdownOpen) {
+        setStateDropdownOpen(false);
+        setStateSearch("");
+      }
+    };
+
+    if (stateDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [stateDropdownOpen]);
 
   // Calculations (matching original exactly)
   const costOfLivingIndex = (stateData as any)[state]?.costIndex || 100;
@@ -547,7 +575,8 @@ function App() {
 
               <div className="space-y-6">
                 {/* Profile Settings */}
-                <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-4">
+                  {/* Profession - Full Width */}
                   <div>
                     <label className="block text-sm font-semibold mb-2">
                       Profissão:
@@ -555,7 +584,7 @@ function App() {
                     <select
                       value={profession}
                       onChange={(e) => setProfession(e.target.value)}
-                      className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                      className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all text-base leading-6 min-h-[3.5rem]"
                     >
                       {Object.entries(professionData).map(([key, prof]) => (
                         <option key={key} value={key}>
@@ -565,37 +594,115 @@ function App() {
                     </select>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-semibold mb-2">
-                      Estado:
-                    </label>
-                    <select
-                      value={state}
-                      onChange={(e) => setState(e.target.value)}
-                      className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
-                    >
-                      {Object.entries(stateData).map(([key, s]) => (
-                        <option key={key} value={key}>
-                          {s.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  {/* State and Experience - Two Columns */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-semibold mb-2">
+                        Estado:
+                      </label>
+                      <div className="relative">
+                        <div
+                          className="w-full p-3 border-2 border-gray-300 rounded-lg focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-200 transition-all cursor-pointer bg-white flex items-center justify-between text-base leading-6 min-h-[3.5rem]"
+                          onClick={() =>
+                            setStateDropdownOpen(!stateDropdownOpen)
+                          }
+                        >
+                          <span>
+                            {(stateData as any)[state]?.name ||
+                              "Selecione um estado"}
+                          </span>
+                          <svg
+                            className={`w-5 h-5 text-gray-400 transition-transform ${
+                              stateDropdownOpen ? "rotate-180" : ""
+                            }`}
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 9l-7 7-7-7"
+                            />
+                          </svg>
+                        </div>
 
-                  <div>
-                    <label className="block text-sm font-semibold mb-2">
-                      Experiência:
-                    </label>
-                    <select
-                      value={experienceLevel}
-                      onChange={(e) => setExperienceLevel(e.target.value)}
-                      className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
-                    >
-                      <option value="junior">Júnior (0-2 anos)</option>
-                      <option value="pleno">Pleno (2-5 anos)</option>
-                      <option value="senior">Sênior (5+ anos)</option>
-                      <option value="specialist">Especialista (8+ anos)</option>
-                    </select>
+                        {stateDropdownOpen && (
+                          <div className="absolute z-50 w-full mt-1 bg-white border-2 border-gray-300 rounded-lg shadow-lg">
+                            <div className="p-2 border-b border-gray-200">
+                              <input
+                                type="text"
+                                placeholder="🔍 Buscar estado..."
+                                value={stateSearch}
+                                onChange={(e) => setStateSearch(e.target.value)}
+                                className="w-full p-2 text-sm border border-gray-300 rounded focus:border-blue-500 focus:ring-1 focus:ring-blue-200 transition-all"
+                                autoFocus
+                              />
+                            </div>
+                            <div className="max-h-48 overflow-y-auto">
+                              {Object.entries(stateData)
+                                .filter(
+                                  ([key, s]) =>
+                                    normalizeText(s.name).includes(
+                                      normalizeText(stateSearch)
+                                    ) ||
+                                    normalizeText(key).includes(
+                                      normalizeText(stateSearch)
+                                    )
+                                )
+                                .sort(([_, a], [__, b]) =>
+                                  a.name.localeCompare(b.name)
+                                )
+                                .map(([key, s]) => (
+                                  <div
+                                    key={key}
+                                    className="p-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                                    onClick={() => {
+                                      setState(key);
+                                      setStateDropdownOpen(false);
+                                      setStateSearch("");
+                                    }}
+                                  >
+                                    {s.name}
+                                  </div>
+                                ))}
+                              {Object.entries(stateData).filter(
+                                ([key, s]) =>
+                                  normalizeText(s.name).includes(
+                                    normalizeText(stateSearch)
+                                  ) ||
+                                  normalizeText(key).includes(
+                                    normalizeText(stateSearch)
+                                  )
+                              ).length === 0 && (
+                                <div className="p-3 text-gray-500 text-center">
+                                  Nenhum estado encontrado
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold mb-2">
+                        Experiência:
+                      </label>
+                      <select
+                        value={experienceLevel}
+                        onChange={(e) => setExperienceLevel(e.target.value)}
+                        className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all text-base leading-6 min-h-[3.5rem]"
+                      >
+                        <option value="junior">Júnior (0-2 anos)</option>
+                        <option value="pleno">Pleno (2-5 anos)</option>
+                        <option value="senior">Sênior (5+ anos)</option>
+                        <option value="specialist">
+                          Especialista (8+ anos)
+                        </option>
+                      </select>
+                    </div>
                   </div>
                 </div>
 
