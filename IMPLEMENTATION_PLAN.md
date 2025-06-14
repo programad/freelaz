@@ -12,13 +12,26 @@ Criar uma calculadora de preços inteligente para freelancers brasileiros que tr
 
 ### 🏗️ INFRAESTRUTURA E BASE
 
+**Arquitetura Monorepo:**
+
+- ✅ Estrutura apps/ e packages/
+- ✅ npm workspaces configurado
+- ✅ Script de sincronização de .env
+- ✅ apps/web - React + Vite frontend
+- ✅ apps/api - Hono + Cloudflare Workers
+- ✅ packages/shared - Tipos e utilitários compartilhados
+- 🔴 packages/config - Configurações compartilhadas (ESLint, TypeScript)
+- 🔴 Turborepo para builds otimizados
+
 **Stack Tecnológico:**
 
 - ✅ React 18 + TypeScript
 - ✅ Vite (build tool)
 - ✅ Tailwind CSS
 - ✅ Responsive design
-- 🔴 Cloudflare Workers (hosting + API)
+- ✅ Hono (API framework)
+- 🔴 Cloudflare Pages (frontend hosting)
+- 🔴 Cloudflare Workers (API hosting)
 - 🔴 D1 Database (SQLite)
 - 🔴 GitHub Actions (CI/CD)
 

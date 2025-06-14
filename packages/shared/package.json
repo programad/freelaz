@@ -1,0 +1,21 @@
+{
+  "name": "@brazilian-rate-calculator/shared",
+  "version": "1.0.0",
+  "description": "Shared types and utilities for Brazilian Rate Calculator",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "type-check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3"
+  }
+}

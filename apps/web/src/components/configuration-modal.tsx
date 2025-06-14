@@ -2,8 +2,8 @@ import {
   professionData,
   type ProfessionKey,
   type ExperienceLevel,
-} from "../data/profession-data";
-import { type StateKey } from "../data/state-data";
+  type StateKey,
+} from "@brazilian-rate-calculator/shared";
 import { SearchableStateDropdown } from "./searchable-state-dropdown";
 
 interface ConfigurationModalProps {

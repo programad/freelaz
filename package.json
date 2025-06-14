@@ -1,30 +1,33 @@
 {
-  "name": "ratecalculator",
+  "name": "brazilian-rate-calculator",
+  "version": "1.0.0",
+  "description": "Brazilian Freelancer Rate Calculator - Monorepo",
   "private": true,
-  "version": "0.0.0",
-  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "lint": "eslint .",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "@tailwindcss/vite": "^4.1.10",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0"
+    "dev": "npm run dev --workspace=apps/web",
+    "build": "npm run build --workspace=apps/web",
+    "preview": "npm run preview --workspace=apps/web",
+    "lint": "npm run lint --workspaces --if-present",
+    "type-check": "npm run type-check --workspaces --if-present",
+    "sync-env": "node scripts/sync-env.js",
+    "dev:api": "npm run dev --workspace=apps/api",
+    "dev:all": "concurrently \"npm run dev:api\" \"npm run dev\"",
+    "deploy:web": "npm run deploy --workspace=apps/web",
+    "deploy:api": "npm run deploy --workspace=apps/api"
   },
   "devDependencies": {
-    "@eslint/js": "^9.25.0",
-    "@types/react": "^19.1.8",
-    "@types/react-dom": "^19.1.6",
-    "@vitejs/plugin-react": "^4.4.1",
-    "eslint": "^9.25.0",
-    "eslint-plugin-react-hooks": "^5.2.0",
-    "eslint-plugin-react-refresh": "^0.4.19",
-    "globals": "^16.0.0",
-    "tailwindcss": "^4.1.10",
-    "typescript": "^5.8.3",
-    "vite": "^6.3.5"
-  }
+    "concurrently": "^8.2.2"
+  },
+  "keywords": [
+    "freelancer",
+    "rate-calculator",
+    "brazil",
+    "monorepo"
+  ],
+  "author": "Brazilian Rate Calculator Team",
+  "license": "MIT"
 }

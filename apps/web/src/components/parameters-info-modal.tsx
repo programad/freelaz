@@ -1,8 +1,9 @@
-import { stateData, type StateKey } from "../data/state-data";
 import {
+  stateData,
   costOfLivingInfo,
   multiplierExplanation,
-} from "../data/cost-of-living-info";
+  type StateKey,
+} from "@brazilian-rate-calculator/shared";
 
 interface ParametersInfoModalProps {
   isOpen: boolean;

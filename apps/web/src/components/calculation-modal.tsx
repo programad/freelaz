@@ -1,4 +1,4 @@
-import { formatCurrency } from "../utils/text-utils";
+import { formatCurrency } from "@brazilian-rate-calculator/shared";
 
 interface CalculationModalProps {
   isOpen: boolean;

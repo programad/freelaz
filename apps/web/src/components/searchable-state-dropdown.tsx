@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
-import { stateData, type StateKey } from "../data/state-data";
-import { normalizeText } from "../utils/text-utils";
+import {
+  stateData,
+  normalizeText,
+  type StateKey,
+} from "@brazilian-rate-calculator/shared";
 
 interface SearchableStateDropdownProps {
   value: StateKey;

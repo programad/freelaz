@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import {
   professionData,
+  stateData,
+  formatCurrency,
   type ProfessionKey,
   type ExperienceLevel,
-} from "./data/profession-data";
-import { stateData, type StateKey } from "./data/state-data";
-import { formatCurrency } from "./utils/text-utils";
+  type StateKey,
+} from "@brazilian-rate-calculator/shared";
 import { ConfigurationModal } from "./components/configuration-modal";
 import { CalculationModal } from "./components/calculation-modal";
 import { ParametersInfoModal } from "./components/parameters-info-modal";
@@ -23,7 +24,7 @@ function App() {
 
   // Google Analytics
   const { trackEvent } = useGoogleAnalytics();
-  const gaId = import.meta.env.ANALYTICS_ID;
+  const gaId = import.meta.env.VITE_ANALYTICS_ID;
   const isDevelopment = import.meta.env.DEV;
 
   // Form data - matching the original exactly
@@ -137,6 +138,8 @@ function App() {
                     <span className="font-bold text-green-600">
                       {exchangeRate.toFixed(2)}
                     </span>
+                    {" • "}
+                    <span className="text-gray-400">{lastUpdated}</span>
                   </div>
                 </div>
                 <button
