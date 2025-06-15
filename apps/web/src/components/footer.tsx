@@ -18,7 +18,7 @@ export const Footer = () => {
         </p>
         <div className="flex justify-center items-center gap-4 mt-3">
           <a
-            href="https://github.com/programad/ratecalculator"
+            href="https://github.com/programad/freelaz"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm"
