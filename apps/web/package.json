@@ -2,6 +2,8 @@
   "name": "@freelaz/web",
   "version": "1.0.0",
   "description": "Freelaz - Web App",
+  "author": "Danny Gomes <danny@dannygomes.dev> (https://dannygomes.dev)",
+  "license": "MIT",
   "private": true,
   "type": "module",
   "scripts": {

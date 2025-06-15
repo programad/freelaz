@@ -101,15 +101,8 @@ export function ConfigurationModal({
               />
             </div>
 
-            {/* State and Experience - Mobile Stacked */}
+            {/* Experience and State - Mobile Stacked */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-semibold mb-2">
-                  Estado:
-                </label>
-                <SearchableStateDropdown value={state} onChange={setState} />
-              </div>
-
               <div>
                 <label className="block text-sm font-semibold mb-2">
                   Experiência:
@@ -122,6 +115,13 @@ export function ConfigurationModal({
                   options={experienceOptions}
                   placeholder="Selecione o nível"
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold mb-2">
+                  Estado:
+                </label>
+                <SearchableStateDropdown value={state} onChange={setState} />
               </div>
             </div>
           </div>

@@ -14,6 +14,7 @@ import {
   GoogleAnalytics,
   useGoogleAnalytics,
 } from "./components/google-analytics";
+import { Footer } from "./components/footer";
 
 function App() {
   const [showWizard, setShowWizard] = useState(false);
@@ -131,12 +132,12 @@ function App() {
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0">
                 <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm">
                   <span className="text-gray-600 font-medium">
-                    {professionData[profession]?.name.pt} •{" "}
-                    {stateData[state]?.name} •
+                    {professionData[profession]?.name.pt} •
                     {experienceLevel === "junior" && " Júnior"}
                     {experienceLevel === "pleno" && " Pleno"}
                     {experienceLevel === "senior" && " Sênior"}
-                    {experienceLevel === "specialist" && " Especialista"}
+                    {experienceLevel === "specialist" && " Especialista"} •{" "}
+                    {stateData[state]?.name}
                   </span>
                   <div className="text-xs text-gray-500">
                     USD → BRL:{" "}
@@ -431,14 +432,15 @@ function App() {
                 onClick={() => setShowCalculation(true)}
                 className="text-xs sm:text-sm px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-1 font-medium"
               >
-                🧮 <span className="hidden sm:inline">Como </span>Calc
-                <span className="hidden sm:inline">ulamos</span>?
+                🧮 <span className="sm:hidden">Cálculo</span>
+                <span className="hidden sm:inline">Como Calculamos?</span>
               </button>
               <button
                 onClick={() => setShowParameters(true)}
                 className="text-xs sm:text-sm px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-1 font-medium"
               >
-                📊 Param<span className="hidden sm:inline">etros</span>
+                📊 <span className="sm:hidden">Dados</span>
+                <span className="hidden sm:inline">Parâmetros</span>
               </button>
             </div>
 
@@ -573,6 +575,9 @@ function App() {
           currentState={state}
         />
       </div>
+
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }
