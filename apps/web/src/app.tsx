@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   professionData,
   stateData,
@@ -15,6 +15,12 @@ import {
   useGoogleAnalytics,
 } from "./components/google-analytics";
 import { Footer } from "./components/footer";
+import {
+  useLocalStorageConfig,
+  type FreelazConfig,
+} from "./hooks/use-local-storage";
+import { useToast } from "./hooks/use-toast";
+import { ToastContainer } from "./components/toast-container";
 
 function App() {
   const [showWizard, setShowWizard] = useState(false);
@@ -22,21 +28,6 @@ function App() {
   const [showParameters, setShowParameters] = useState(false);
   const [exchangeRate, setExchangeRate] = useState(5.57);
   const [lastUpdated, setLastUpdated] = useState("Taxa padrão");
-
-  // Google Analytics
-  const { trackEvent, isProduction } = useGoogleAnalytics();
-  const gaId = import.meta.env.VITE_ANALYTICS_ID;
-  const isDevelopment = import.meta.env.DEV;
-
-  // Track page load
-  useEffect(() => {
-    trackEvent("page_load", {
-      initial_profession: profession,
-      initial_state: state,
-      initial_experience: experienceLevel,
-      initial_expenses: monthlyExpenses,
-    });
-  }, []);
 
   // Form data - matching the original exactly
   const [profession, setProfession] = useState<ProfessionKey>("fullstack");
@@ -50,6 +41,88 @@ function App() {
   const [workHours, setWorkHours] = useState(8);
   const [workDays, setWorkDays] = useState(5);
   const [vacationDays, setVacationDays] = useState(30);
+
+  // Google Analytics
+  const { trackEvent, isProduction } = useGoogleAnalytics();
+  const gaId = import.meta.env.VITE_ANALYTICS_ID;
+  const isDevelopment = import.meta.env.DEV;
+
+  // Toast notifications
+  const { toasts, showSuccess, showError, showInfo, removeToast } = useToast();
+
+  // Current configuration object for localStorage hook
+  const currentConfig = {
+    profession,
+    state,
+    experienceLevel,
+    monthlyExpenses,
+    savingsPercent,
+    extraPercent,
+    taxPercent,
+    workHours,
+    workDays,
+    vacationDays,
+  };
+
+  // LocalStorage configuration management callbacks - memoized to prevent recreation
+  const onLoadCallback = useCallback(
+    (config: FreelazConfig) => {
+      if (config.profession) setProfession(config.profession as ProfessionKey);
+      if (config.state) setState(config.state as StateKey);
+      if (config.experienceLevel)
+        setExperienceLevel(config.experienceLevel as ExperienceLevel);
+      if (config.monthlyExpenses) setMonthlyExpenses(config.monthlyExpenses);
+      if (config.savingsPercent !== undefined)
+        setSavingsPercent(config.savingsPercent);
+      if (config.extraPercent !== undefined)
+        setExtraPercent(config.extraPercent);
+      if (config.taxPercent !== undefined) setTaxPercent(config.taxPercent);
+      if (config.workHours) setWorkHours(config.workHours);
+      if (config.workDays) setWorkDays(config.workDays);
+      if (config.vacationDays) setVacationDays(config.vacationDays);
+
+      trackEvent("configuration_loaded", {
+        source: "localStorage",
+        profession: config.profession,
+        state: config.state,
+        experience_level: config.experienceLevel,
+      });
+    },
+    [] // Removed trackEvent dependency since it doesn't capture external state
+  );
+
+  const onErrorCallback = useCallback(
+    (error: Error) => {
+      trackEvent("configuration_load_error", {
+        error: error.message,
+      });
+    },
+    [] // Removed trackEvent dependency since it doesn't capture external state
+  );
+
+  // LocalStorage configuration management
+  const { loadConfig, saveConfig, clearConfig, hasConfig } =
+    useLocalStorageConfig(currentConfig, onLoadCallback, onErrorCallback);
+
+  // Load saved configuration on app start - only once
+  const hasLoadedConfig = useRef(false);
+  useEffect(() => {
+    if (!hasLoadedConfig.current) {
+      loadConfig();
+      hasLoadedConfig.current = true;
+    }
+  }, []); // Empty dependency array to run only once
+
+  // Track page load (after configuration is loaded)
+  useEffect(() => {
+    trackEvent("page_load", {
+      initial_profession: profession,
+      initial_state: state,
+      initial_experience: experienceLevel,
+      initial_expenses: monthlyExpenses,
+      has_saved_config: hasConfig(),
+    });
+  }, [profession, state, experienceLevel, monthlyExpenses]);
 
   // Load exchange rate (matching original)
   useEffect(() => {
@@ -560,29 +633,21 @@ function App() {
             <div className="grid grid-cols-3 gap-2 sm:gap-4">
               <button
                 onClick={() => {
-                  const config = {
-                    profession,
-                    state,
-                    experienceLevel,
-                    monthlyExpenses,
-                    savingsPercent,
-                    extraPercent,
-                    taxPercent,
-                    workHours,
-                    workDays,
-                    vacationDays,
-                  };
-                  localStorage.setItem("freelazConfig", JSON.stringify(config));
+                  const success = saveConfig(currentConfig);
 
-                  // Track save event
-                  trackEvent("save_configuration", {
-                    profession,
-                    state,
-                    experience_level: experienceLevel,
-                    hourly_rate: Math.round(baseRate),
-                  });
+                  if (success) {
+                    // Track save event
+                    trackEvent("save_configuration", {
+                      profession,
+                      state,
+                      experience_level: experienceLevel,
+                      hourly_rate: Math.round(baseRate),
+                    });
 
-                  alert("Configuração salva com sucesso!");
+                    showSuccess("Configuração salva com sucesso!");
+                  } else {
+                    showError("Erro ao salvar configuração. Tente novamente.");
+                  }
                 }}
                 className="bg-gradient-to-r from-blue-600 to-purple-700 text-white px-3 sm:px-4 py-3 rounded-lg font-semibold hover:shadow-lg transition-all transform hover:scale-105 text-sm sm:text-base flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2"
               >
@@ -618,7 +683,12 @@ function App() {
                     navigator.clipboard
                       .writeText(text)
                       .then(() =>
-                        alert("Resultado copiado para a área de transferência!")
+                        showSuccess(
+                          "Resultado copiado para a área de transferência!"
+                        )
+                      )
+                      .catch(() =>
+                        showError("Erro ao copiar para a área de transferência")
                       );
                   }
                 }}
@@ -635,7 +705,7 @@ function App() {
                     hourly_rate_usd: Math.round(rates.regular / exchangeRate),
                     monthly_expenses: monthlyExpenses,
                   });
-                  alert("Funcionalidade de PDF em desenvolvimento");
+                  showInfo("Funcionalidade de PDF em desenvolvimento");
                 }}
                 className="bg-green-600 text-white px-3 sm:px-4 py-3 rounded-lg font-semibold hover:shadow-lg transition-all transform hover:scale-105 text-sm sm:text-base flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2"
               >
@@ -742,6 +812,9 @@ function App() {
 
       {/* Footer */}
       <Footer />
+
+      {/* Toast Container */}
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
     </div>
   );
 }
