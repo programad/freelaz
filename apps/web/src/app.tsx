@@ -24,9 +24,19 @@ function App() {
   const [lastUpdated, setLastUpdated] = useState("Taxa padrão");
 
   // Google Analytics
-  const { trackEvent } = useGoogleAnalytics();
+  const { trackEvent, isProduction } = useGoogleAnalytics();
   const gaId = import.meta.env.VITE_ANALYTICS_ID;
   const isDevelopment = import.meta.env.DEV;
+
+  // Track page load
+  useEffect(() => {
+    trackEvent("page_load", {
+      initial_profession: profession,
+      initial_state: state,
+      initial_experience: experienceLevel,
+      initial_expenses: monthlyExpenses,
+    });
+  }, []);
 
   // Form data - matching the original exactly
   const [profession, setProfession] = useState<ProfessionKey>("fullstack");
@@ -45,16 +55,24 @@ function App() {
   useEffect(() => {
     const fetchExchangeRate = async () => {
       try {
+        trackEvent("exchange_rate_fetch_start");
         const response = await fetch(
           "https://economia.awesomeapi.com.br/last/USD-BRL"
         );
         const data = await response.json();
         if (data.USDBRL) {
-          setExchangeRate(parseFloat(data.USDBRL.bid));
+          const newRate = parseFloat(data.USDBRL.bid);
+          setExchangeRate(newRate);
           setLastUpdated("Atualizado: agora");
+          trackEvent("exchange_rate_fetch_success", {
+            exchange_rate: newRate,
+          });
         }
       } catch (error) {
         console.log("Failed to load exchange rate");
+        trackEvent("exchange_rate_fetch_error", {
+          error: error instanceof Error ? error.message : "Unknown error",
+        });
       }
     };
     fetchExchangeRate();
@@ -108,6 +126,13 @@ function App() {
       {/* Google Analytics */}
       <GoogleAnalytics measurementId={gaId} debug={isDevelopment} />
 
+      {/* Development Analytics Status */}
+      {isDevelopment && (
+        <div className="fixed bottom-4 left-4 bg-yellow-100 border border-yellow-400 text-yellow-800 px-3 py-2 rounded-lg text-xs font-medium shadow-lg">
+          📊 Analytics: {isProduction ? "Production" : "Development Mode"}
+        </div>
+      )}
+
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <header className="text-center mb-6 text-white">
@@ -151,7 +176,15 @@ function App() {
                   </div>
                 </div>
                 <button
-                  onClick={() => setShowWizard(true)}
+                  onClick={() => {
+                    setShowWizard(true);
+                    trackEvent("open_configuration_modal", {
+                      current_profession: profession,
+                      current_state: state,
+                      current_experience: experienceLevel,
+                      current_hourly_rate: Math.round(baseRate),
+                    });
+                  }}
                   className="text-sm px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium w-full sm:w-auto"
                 >
                   ⚙️ Configurar
@@ -173,8 +206,18 @@ function App() {
                 <input
                   type="number"
                   value={monthlyExpenses}
-                  onChange={(e) => setMonthlyExpenses(Number(e.target.value))}
+                  onChange={(e) => {
+                    const newValue = Number(e.target.value);
+                    setMonthlyExpenses(newValue);
+                    trackEvent("change_monthly_expenses", {
+                      old_value: monthlyExpenses,
+                      new_value: newValue,
+                      profession,
+                      state,
+                    });
+                  }}
                   onFocus={(e) => {
+                    trackEvent("focus_monthly_expenses_input");
                     // Use setTimeout to ensure selection happens after React's event handling
                     setTimeout(
                       () => (e.target as HTMLInputElement).select(),
@@ -205,6 +248,12 @@ function App() {
                 </h3>
                 <button
                   onClick={() => {
+                    // Track reset before changing values
+                    trackEvent("reset_quick_adjustments", {
+                      old_savings: savingsPercent,
+                      old_extra: extraPercent,
+                      old_tax: taxPercent,
+                    });
                     // Reset to default values
                     setSavingsPercent(20);
                     setExtraPercent(10);
@@ -226,9 +275,14 @@ function App() {
                       min="0"
                       max="50"
                       value={savingsPercent}
-                      onChange={(e) =>
-                        setSavingsPercent(Number(e.target.value))
-                      }
+                      onChange={(e) => {
+                        const newValue = Number(e.target.value);
+                        trackEvent("adjust_savings_percent", {
+                          old_value: savingsPercent,
+                          new_value: newValue,
+                        });
+                        setSavingsPercent(newValue);
+                      }}
                       className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
                     />
                     <span className="bg-blue-100 text-blue-600 px-3 py-1 rounded font-semibold text-sm min-w-14 text-center">
@@ -246,7 +300,14 @@ function App() {
                       min="0"
                       max="30"
                       value={extraPercent}
-                      onChange={(e) => setExtraPercent(Number(e.target.value))}
+                      onChange={(e) => {
+                        const newValue = Number(e.target.value);
+                        trackEvent("adjust_extra_percent", {
+                          old_value: extraPercent,
+                          new_value: newValue,
+                        });
+                        setExtraPercent(newValue);
+                      }}
                       className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
                     />
                     <span className="bg-blue-100 text-blue-600 px-3 py-1 rounded font-semibold text-sm min-w-14 text-center">
@@ -264,7 +325,14 @@ function App() {
                       min="0"
                       max="40"
                       value={taxPercent}
-                      onChange={(e) => setTaxPercent(Number(e.target.value))}
+                      onChange={(e) => {
+                        const newValue = Number(e.target.value);
+                        trackEvent("adjust_tax_percent", {
+                          old_value: taxPercent,
+                          new_value: newValue,
+                        });
+                        setTaxPercent(newValue);
+                      }}
                       className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
                     />
                     <span className="bg-blue-100 text-blue-600 px-3 py-1 rounded font-semibold text-sm min-w-14 text-center">
@@ -293,7 +361,15 @@ function App() {
                 </div>
               </div>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-400 rounded-xl p-4 text-center">
+                <div
+                  className="bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-400 rounded-xl p-4 text-center hover:shadow-lg transition-all cursor-pointer"
+                  onClick={() =>
+                    trackEvent("click_rate_card", {
+                      rate_type: "regular",
+                      rate_value: Math.round(rates.regular),
+                    })
+                  }
+                >
                   <h4 className="text-xs sm:text-sm font-bold mb-2 text-green-700">
                     🟢 <span className="hidden sm:inline">Projeto</span> Normal
                   </h4>
@@ -304,7 +380,15 @@ function App() {
                     {formatCurrency(rates.regular / exchangeRate, "USD")}/h
                   </div>
                 </div>
-                <div className="bg-gradient-to-br from-yellow-50 to-amber-50 border-2 border-yellow-400 rounded-xl p-4 text-center">
+                <div
+                  className="bg-gradient-to-br from-yellow-50 to-amber-50 border-2 border-yellow-400 rounded-xl p-4 text-center hover:shadow-lg transition-all cursor-pointer"
+                  onClick={() =>
+                    trackEvent("click_rate_card", {
+                      rate_type: "revision",
+                      rate_value: Math.round(rates.revision),
+                    })
+                  }
+                >
                   <h4 className="text-xs sm:text-sm font-bold mb-2 text-yellow-700">
                     🟡 <span className="hidden sm:inline">Com</span> Revisões
                   </h4>
@@ -315,7 +399,15 @@ function App() {
                     {formatCurrency(rates.revision / exchangeRate, "USD")}/h
                   </div>
                 </div>
-                <div className="bg-gradient-to-br from-orange-50 to-red-50 border-2 border-orange-400 rounded-xl p-4 text-center">
+                <div
+                  className="bg-gradient-to-br from-orange-50 to-red-50 border-2 border-orange-400 rounded-xl p-4 text-center hover:shadow-lg transition-all cursor-pointer"
+                  onClick={() =>
+                    trackEvent("click_rate_card", {
+                      rate_type: "rush",
+                      rate_value: Math.round(rates.rush),
+                    })
+                  }
+                >
                   <h4 className="text-xs sm:text-sm font-bold mb-2 text-orange-700">
                     🟠 <span className="hidden sm:inline">Projeto</span> Urgente
                   </h4>
@@ -326,7 +418,15 @@ function App() {
                     {formatCurrency(rates.rush / exchangeRate, "USD")}/h
                   </div>
                 </div>
-                <div className="bg-gradient-to-br from-red-50 to-pink-50 border-2 border-red-400 rounded-xl p-4 text-center">
+                <div
+                  className="bg-gradient-to-br from-red-50 to-pink-50 border-2 border-red-400 rounded-xl p-4 text-center hover:shadow-lg transition-all cursor-pointer"
+                  onClick={() =>
+                    trackEvent("click_rate_card", {
+                      rate_type: "difficult",
+                      rate_value: Math.round(rates.difficult),
+                    })
+                  }
+                >
                   <h4 className="text-xs sm:text-sm font-bold mb-2 text-red-700">
                     🔴 <span className="hidden sm:inline">Cliente</span> Difícil
                   </h4>
@@ -429,14 +529,26 @@ function App() {
             {/* Secondary Actions - Mobile Optimized */}
             <div className="flex justify-center gap-2 sm:gap-3 mb-4">
               <button
-                onClick={() => setShowCalculation(true)}
+                onClick={() => {
+                  setShowCalculation(true);
+                  trackEvent("open_calculation_modal", {
+                    current_hourly_rate: Math.round(baseRate),
+                    monthly_expenses: monthlyExpenses,
+                  });
+                }}
                 className="text-xs sm:text-sm px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-1 font-medium"
               >
                 🧮 <span className="sm:hidden">Cálculo</span>
                 <span className="hidden sm:inline">Como Calculamos?</span>
               </button>
               <button
-                onClick={() => setShowParameters(true)}
+                onClick={() => {
+                  setShowParameters(true);
+                  trackEvent("open_parameters_modal", {
+                    current_state: state,
+                    current_profession: profession,
+                  });
+                }}
                 className="text-xs sm:text-sm px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-1 font-medium"
               >
                 📊 <span className="sm:hidden">Dados</span>
@@ -517,9 +629,14 @@ function App() {
                 <span className="sm:hidden text-xs">Comp.</span>
               </button>
               <button
-                onClick={() =>
-                  alert("Funcionalidade de PDF em desenvolvimento")
-                }
+                onClick={() => {
+                  trackEvent("click_pdf_export", {
+                    hourly_rate_brl: Math.round(rates.regular),
+                    hourly_rate_usd: Math.round(rates.regular / exchangeRate),
+                    monthly_expenses: monthlyExpenses,
+                  });
+                  alert("Funcionalidade de PDF em desenvolvimento");
+                }}
                 className="bg-green-600 text-white px-3 sm:px-4 py-3 rounded-lg font-semibold hover:shadow-lg transition-all transform hover:scale-105 text-sm sm:text-base flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2"
               >
                 <span className="text-lg sm:text-base">📄</span>
@@ -532,25 +649,69 @@ function App() {
         {/* Configuration Modal */}
         <ConfigurationModal
           isOpen={showWizard}
-          onClose={() => setShowWizard(false)}
+          onClose={() => {
+            setShowWizard(false);
+            trackEvent("close_configuration_modal", {
+              time_spent_seconds: Math.round(performance.now() / 1000),
+            });
+          }}
           profession={profession}
-          setProfession={setProfession}
+          setProfession={(newProfession) => {
+            setProfession(newProfession);
+            trackEvent("change_profession", {
+              old_profession: profession,
+              new_profession: newProfession,
+            });
+          }}
           state={state}
-          setState={setState}
+          setState={(newState) => {
+            setState(newState);
+            trackEvent("change_state", {
+              old_state: state,
+              new_state: newState,
+            });
+          }}
           experienceLevel={experienceLevel}
-          setExperienceLevel={setExperienceLevel}
+          setExperienceLevel={(newLevel) => {
+            setExperienceLevel(newLevel);
+            trackEvent("change_experience_level", {
+              old_level: experienceLevel,
+              new_level: newLevel,
+            });
+          }}
           workHours={workHours}
-          setWorkHours={setWorkHours}
+          setWorkHours={(newHours) => {
+            setWorkHours(newHours);
+            trackEvent("change_work_hours", {
+              old_hours: workHours,
+              new_hours: newHours,
+            });
+          }}
           workDays={workDays}
-          setWorkDays={setWorkDays}
+          setWorkDays={(newDays) => {
+            setWorkDays(newDays);
+            trackEvent("change_work_days", {
+              old_days: workDays,
+              new_days: newDays,
+            });
+          }}
           vacationDays={vacationDays}
-          setVacationDays={setVacationDays}
+          setVacationDays={(newDays) => {
+            setVacationDays(newDays);
+            trackEvent("change_vacation_days", {
+              old_days: vacationDays,
+              new_days: newDays,
+            });
+          }}
         />
 
         {/* Calculation Explanation Modal */}
         <CalculationModal
           isOpen={showCalculation}
-          onClose={() => setShowCalculation(false)}
+          onClose={() => {
+            setShowCalculation(false);
+            trackEvent("close_calculation_modal");
+          }}
           monthlyExpenses={monthlyExpenses}
           costOfLivingIndex={costOfLivingIndex}
           adjustedExpenses={adjustedExpenses}
@@ -571,7 +732,10 @@ function App() {
         {/* Parameters Info Modal */}
         <ParametersInfoModal
           isOpen={showParameters}
-          onClose={() => setShowParameters(false)}
+          onClose={() => {
+            setShowParameters(false);
+            trackEvent("close_parameters_modal");
+          }}
           currentState={state}
         />
       </div>

@@ -5,6 +5,30 @@ interface GoogleAnalyticsProps {
   debug?: boolean;
 }
 
+// Helper function to check if we're in production environment
+const isProduction = (): boolean => {
+  if (typeof window === "undefined") return false;
+
+  const hostname = window.location.hostname;
+  const isDev = import.meta.env.DEV;
+
+  // Consider it production if:
+  // 1. Not in dev mode AND
+  // 2. Not localhost or 127.0.0.1 or local development domains
+  return (
+    !isDev &&
+    !hostname.includes("localhost") &&
+    !hostname.includes("127.0.0.1") &&
+    !hostname.includes(".local") &&
+    !hostname.includes("dev.")
+  );
+};
+
+// Helper function to check if analytics should be enabled
+const shouldEnableAnalytics = (measurementId?: string): boolean => {
+  return !!measurementId && isProduction();
+};
+
 declare global {
   interface Window {
     gtag: (...args: any[]) => void;
@@ -17,9 +41,11 @@ export const GoogleAnalytics = ({
   debug = false,
 }: GoogleAnalyticsProps) => {
   useEffect(() => {
-    if (!measurementId) {
+    if (!shouldEnableAnalytics(measurementId)) {
       if (debug) {
-        console.warn("Google Analytics: No measurement ID provided");
+        console.warn(
+          "Google Analytics: Disabled in development environment or no measurement ID provided"
+        );
       }
       return;
     }
@@ -72,12 +98,27 @@ export const useGoogleAnalytics = () => {
     eventName: string,
     parameters: Record<string, any> = {}
   ) => {
+    // Only track events in production environment
+    if (!isProduction()) {
+      console.log(`[DEV] Analytics Event: ${eventName}`, parameters);
+      return;
+    }
+
     if (typeof window !== "undefined" && window.gtag) {
       window.gtag("event", eventName, parameters);
     }
   };
 
   const trackPageView = (pageTitle?: string, pageLocation?: string) => {
+    // Only track page views in production environment
+    if (!isProduction()) {
+      console.log(`[DEV] Analytics Page View:`, {
+        page_title: pageTitle || document.title,
+        page_location: pageLocation || window.location.href,
+      });
+      return;
+    }
+
     if (typeof window !== "undefined" && window.gtag) {
       window.gtag("event", "page_view", {
         page_title: pageTitle || document.title,
@@ -89,5 +130,9 @@ export const useGoogleAnalytics = () => {
   return {
     trackEvent,
     trackPageView,
+    isProduction: isProduction(),
   };
 };
+
+// Export helper functions for use in other components
+export { isProduction, shouldEnableAnalytics };
