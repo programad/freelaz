@@ -1,11 +1,11 @@
-# 🇧🇷 Brazilian Freelancer Rate Calculator
+# 🇧🇷 Freelaz
 
 A modern, intelligent rate calculator for Brazilian freelancers working with international clients. Built as a monorepo with React frontend and Cloudflare Workers API.
 
 ## 🏗️ Project Structure
 
 ```
-brazilian-rate-calculator/
+freelaz/
 ├── apps/
 │   ├── web/          # React + Vite frontend
 │   └── api/          # Hono + Cloudflare Workers API
@@ -29,7 +29,7 @@ brazilian-rate-calculator/
 
    ```bash
    git clone <repository-url>
-   cd brazilian-rate-calculator
+   cd freelaz
    npm install
    ```
 
@@ -121,13 +121,13 @@ CLOUDFLARE_API_TOKEN=your-api-token
 
 ```bash
 npm run build --workspace=apps/web
-npm run deploy:web
+npm run deploy:web  # Deploys to freelaz-web project
 ```
 
 ### API (Cloudflare Workers):
 
 ```bash
-npm run deploy:api
+npm run deploy:api  # Deploys to freelaz-api worker
 ```
 
 ## 🏛️ Architecture

@@ -3,7 +3,7 @@ import {
   type ProfessionKey,
   type ExperienceLevel,
   type StateKey,
-} from "@brazilian-rate-calculator/shared";
+} from "@freelaz/shared";
 import { SearchableStateDropdown } from "./searchable-state-dropdown";
 import { CustomDropdown } from "./custom-dropdown";
 import { useBodyScrollLock } from "../hooks/use-body-scroll-lock";
@@ -71,11 +71,14 @@ export function ConfigurationModal({
         className="bg-white rounded-2xl p-6 max-w-2xl w-full mx-4 shadow-2xl max-h-[90vh] overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex justify-between items-center mb-6 flex-shrink-0">
-          <h2 className="text-2xl font-bold">⚙️ Configurações Avançadas</h2>
+        <div className="flex justify-between items-center mb-4 sm:mb-6 flex-shrink-0">
+          <h2 className="text-lg sm:text-2xl font-bold">
+            ⚙️ <span className="hidden sm:inline">Configurações Avançadas</span>
+            <span className="sm:hidden">Config.</span>
+          </h2>
           <button
             onClick={onClose}
-            className="text-2xl text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-xl sm:text-2xl text-gray-400 hover:text-gray-600 transition-colors"
           >
             ×
           </button>
@@ -98,8 +101,8 @@ export function ConfigurationModal({
               />
             </div>
 
-            {/* State and Experience - Two Columns */}
-            <div className="grid grid-cols-2 gap-4">
+            {/* State and Experience - Mobile Stacked */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-semibold mb-2">
                   Estado:
@@ -126,7 +129,10 @@ export function ConfigurationModal({
           {/* Work Configuration */}
           <div>
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-bold">⏰ Configuração de Trabalho</h3>
+              <h3 className="text-base sm:text-lg font-bold">
+                ⏰ <span className="hidden sm:inline">Configuração de</span>{" "}
+                Trabalho
+              </h3>
               <button
                 onClick={() => {
                   // Reset to default values
@@ -139,10 +145,11 @@ export function ConfigurationModal({
                 🔄 Resetar
               </button>
             </div>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-semibold mb-2">
-                  Horas por Dia: {workHours}h
+                  Horas por Dia:{" "}
+                  <span className="font-bold text-blue-600">{workHours}h</span>
                 </label>
                 <input
                   type="range"
@@ -155,7 +162,8 @@ export function ConfigurationModal({
               </div>
               <div>
                 <label className="block text-sm font-semibold mb-2">
-                  Dias por Semana: {workDays}
+                  Dias por Semana:{" "}
+                  <span className="font-bold text-blue-600">{workDays}</span>
                 </label>
                 <input
                   type="range"
@@ -168,7 +176,10 @@ export function ConfigurationModal({
               </div>
               <div>
                 <label className="block text-sm font-semibold mb-2">
-                  Férias por Ano: {vacationDays} dias
+                  Férias por Ano:{" "}
+                  <span className="font-bold text-blue-600">
+                    {vacationDays} dias
+                  </span>
                 </label>
                 <input
                   type="range"
@@ -183,18 +194,22 @@ export function ConfigurationModal({
           </div>
         </div>
 
-        <div className="flex gap-4 mt-6 flex-shrink-0">
+        <div className="flex gap-2 sm:gap-4 mt-4 sm:mt-6 flex-shrink-0">
           <button
             onClick={onClose}
-            className="flex-1 bg-gradient-to-r from-blue-600 to-purple-700 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition-all transform hover:scale-105"
+            className="flex-1 bg-gradient-to-r from-blue-600 to-purple-700 text-white px-4 sm:px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition-all transform hover:scale-105 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 text-sm sm:text-base"
           >
-            ✅ Aplicar e Fechar
+            <span className="text-lg sm:text-base">✅</span>
+            <span className="hidden sm:inline">Aplicar e Fechar</span>
+            <span className="sm:hidden text-xs">Aplicar</span>
           </button>
           <button
             onClick={onClose}
-            className="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-all"
+            className="px-4 sm:px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-all text-sm sm:text-base flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2"
           >
-            Cancelar
+            <span className="text-lg sm:text-base">❌</span>
+            <span className="hidden sm:inline">Cancelar</span>
+            <span className="sm:hidden text-xs">Cancelar</span>
           </button>
         </div>
       </div>

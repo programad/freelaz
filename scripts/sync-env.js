@@ -14,7 +14,7 @@ function syncEnvFiles() {
   if (!fs.existsSync(ROOT_ENV)) {
     console.log("⚠️  Root .env file not found. Creating template...");
 
-    const template = `# Brazilian Rate Calculator Environment Variables
+    const template = `# Freelaz Environment Variables
 # Copy this file to .env and fill in your values
 
 # Web App Configuration (VITE_ prefix required for client-side)

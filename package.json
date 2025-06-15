@@ -1,7 +1,7 @@
 {
-  "name": "brazilian-rate-calculator",
+  "name": "freelaz",
   "version": "1.0.0",
-  "description": "Brazilian Freelancer Rate Calculator - Monorepo",
+  "description": "Freelaz - Brazilian Freelancer Rate Calculator - Monorepo",
   "private": true,
   "workspaces": [
     "apps/*",
@@ -26,8 +26,9 @@
     "freelancer",
     "rate-calculator",
     "brazil",
+    "freelaz",
     "monorepo"
   ],
-  "author": "Brazilian Rate Calculator Team",
+  "author": "Freelaz Team",
   "license": "MIT"
 }

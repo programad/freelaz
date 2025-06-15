@@ -7,7 +7,7 @@ import {
   stateData,
   type ProfessionKey,
   type StateKey,
-} from "@brazilian-rate-calculator/shared";
+} from "@freelaz/shared";
 
 type Bindings = {
   DB: D1Database;
@@ -24,7 +24,8 @@ app.use(
   cors({
     origin: [
       "http://localhost:5173",
-      "https://brazilian-rate-calculator.pages.dev",
+      "https://freelaz.com",
+      "https://freelaz-web.pages.dev",
     ],
     allowMethods: ["GET", "POST", "PUT", "DELETE"],
     allowHeaders: ["Content-Type", "Authorization"],
@@ -34,7 +35,7 @@ app.use(
 // Health check
 app.get("/", (c) => {
   return c.json({
-    message: "Brazilian Rate Calculator API",
+    message: "Freelaz API",
     version: "1.0.0",
     status: "healthy",
     timestamp: new Date().toISOString(),

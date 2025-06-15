@@ -1,4 +1,4 @@
-import { formatCurrency } from "@brazilian-rate-calculator/shared";
+import { formatCurrency } from "@freelaz/shared";
 import { useBodyScrollLock } from "../hooks/use-body-scroll-lock";
 
 interface CalculationModalProps {
@@ -59,17 +59,21 @@ export function CalculationModal({
         className="bg-white rounded-2xl max-w-2xl w-full mx-4 shadow-2xl max-h-[90vh] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex justify-between items-center p-6 pb-4 border-b border-gray-200">
-          <h2 className="text-2xl font-bold">🧮 Como Calculamos Sua Taxa</h2>
+        <div className="flex justify-between items-center p-4 sm:p-6 pb-3 sm:pb-4 border-b border-gray-200">
+          <h2 className="text-lg sm:text-2xl font-bold">
+            🧮{" "}
+            <span className="hidden sm:inline">Como Calculamos Sua Taxa</span>
+            <span className="sm:hidden">Cálculo</span>
+          </h2>
           <button
             onClick={onClose}
-            className="text-2xl text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-xl sm:text-2xl text-gray-400 hover:text-gray-600 transition-colors"
           >
             ×
           </button>
         </div>
 
-        <div className="overflow-y-auto max-h-[calc(90vh-140px)] p-6">
+        <div className="overflow-y-auto max-h-[calc(90vh-140px)] p-4 sm:p-6">
           <div className="space-y-6">
             {/* Step 1 */}
             <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
@@ -192,12 +196,13 @@ export function CalculationModal({
           </div>
         </div>
 
-        <div className="p-6 pt-4 border-t border-gray-200">
+        <div className="p-4 sm:p-6 pt-3 sm:pt-4 border-t border-gray-200">
           <button
             onClick={onClose}
-            className="w-full bg-gradient-to-r from-blue-600 to-purple-700 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition-all transform hover:scale-105"
+            className="w-full bg-gradient-to-r from-blue-600 to-purple-700 text-white px-4 sm:px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition-all transform hover:scale-105 flex items-center justify-center gap-2 text-sm sm:text-base"
           >
-            ✅ Entendi!
+            <span className="text-lg sm:text-base">✅</span>
+            <span>Entendi!</span>
           </button>
         </div>
       </div>

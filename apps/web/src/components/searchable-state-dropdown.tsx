@@ -1,9 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import {
-  stateData,
-  normalizeText,
-  type StateKey,
-} from "@brazilian-rate-calculator/shared";
+import { stateData, normalizeText, type StateKey } from "@freelaz/shared";
 import { DropdownPortal } from "./dropdown-portal";
 
 interface SearchableStateDropdownProps {

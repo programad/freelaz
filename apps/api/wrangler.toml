@@ -1,18 +1,18 @@
-name = "brazilian-rate-calculator-api"
+name = "freelaz-api"
 main = "src/index.ts"
 compatibility_date = "2024-12-01"
 compatibility_flags = ["nodejs_compat"]
 
 [env.production]
-name = "brazilian-rate-calculator-api"
+name = "freelaz-api"
 
 [env.staging]
-name = "brazilian-rate-calculator-api-staging"
+name = "freelaz-api-staging"
 
 # D1 Database configuration (will be created later)
 # [[d1_databases]]
 # binding = "DB"
-# database_name = "brazilian-rate-calculator"
+# database_name = "freelaz"
 # database_id = "your-database-id"
 
 # Environment variables

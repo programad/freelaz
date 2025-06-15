@@ -1,7 +1,7 @@
 {
-  "name": "@brazilian-rate-calculator/web",
+  "name": "@freelaz/web",
   "version": "1.0.0",
-  "description": "Brazilian Freelancer Rate Calculator - Web App",
+  "description": "Freelaz - Web App",
   "private": true,
   "type": "module",
   "scripts": {
@@ -10,10 +10,10 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "type-check": "tsc --noEmit",
-    "deploy": "wrangler pages deploy dist --project-name=brazilian-rate-calculator"
+    "deploy": "wrangler pages deploy dist --project-name=freelaz-web"
   },
   "dependencies": {
-    "@brazilian-rate-calculator/shared": "*",
+    "@freelaz/shared": "*",
     "@tailwindcss/vite": "^4.1.10",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"

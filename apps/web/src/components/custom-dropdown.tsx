@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { normalizeText } from "@brazilian-rate-calculator/shared";
+import { normalizeText } from "@freelaz/shared";
 import { DropdownPortal } from "./dropdown-portal";
 
 interface DropdownOption {

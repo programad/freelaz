@@ -6,7 +6,7 @@ import {
   type ProfessionKey,
   type ExperienceLevel,
   type StateKey,
-} from "@brazilian-rate-calculator/shared";
+} from "@freelaz/shared";
 import { ConfigurationModal } from "./components/configuration-modal";
 import { CalculationModal } from "./components/calculation-modal";
 import { ParametersInfoModal } from "./components/parameters-info-modal";
@@ -103,29 +103,34 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 p-6">
+    <div className="min-h-screen bg-gray-900 p-3 sm:p-6">
       {/* Google Analytics */}
       <GoogleAnalytics measurementId={gaId} debug={isDevelopment} />
 
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <header className="text-center mb-8 text-white">
-          <h1 className="text-4xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">
-            🇧🇷 Calculadora de Preços para Freelancers
+        <header className="text-center mb-6 text-white">
+          <h1 className="text-2xl md:text-4xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">
+            🇧🇷{" "}
+            <span className="hidden sm:inline">Calculadora de Preços para</span>{" "}
+            Freelaz<span className="hidden sm:inline"> Brasileiros</span>
           </h1>
-          <p className="text-lg text-gray-300 font-light mb-6">
-            Brazilian Freelancer Rate Calculator
+          <p className="text-sm md:text-lg text-gray-300 font-light mb-4 md:mb-6">
+            <span className="sm:hidden">Calculadora de Preços</span>
+            <span className="hidden sm:inline">
+              Brazilian Freelancer Rate Calculator
+            </span>
           </p>
         </header>
 
         {/* Single Main Panel */}
         <div className="max-w-4xl mx-auto">
-          <div className="bg-white rounded-3xl p-6 shadow-2xl">
-            {/* Current Profile - Compact */}
+          <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-2xl">
+            {/* Current Profile - Mobile Responsive */}
             <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border border-blue-200">
-              <div className="flex justify-between items-center text-sm">
-                <div className="flex items-center gap-4">
-                  <span className="text-gray-600">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm">
+                  <span className="text-gray-600 font-medium">
                     {professionData[profession]?.name.pt} •{" "}
                     {stateData[state]?.name} •
                     {experienceLevel === "junior" && " Júnior"}
@@ -138,13 +143,15 @@ function App() {
                     <span className="font-bold text-green-600">
                       {exchangeRate.toFixed(2)}
                     </span>
-                    {" • "}
-                    <span className="text-gray-400">{lastUpdated}</span>
+                    <span className="hidden sm:inline"> • </span>
+                    <span className="text-gray-400 block sm:inline">
+                      {lastUpdated}
+                    </span>
                   </div>
                 </div>
                 <button
                   onClick={() => setShowWizard(true)}
-                  className="text-xs px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                  className="text-sm px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium w-full sm:w-auto"
                 >
                   ⚙️ Configurar
                 </button>
@@ -153,11 +160,13 @@ function App() {
 
             {/* Primary Input - Cost of Living */}
             <div className="mb-6">
-              <h2 className="text-2xl font-bold text-gray-800 mb-4">
-                💰 Qual seu custo de vida mensal?
+              <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-4">
+                💰 <span className="hidden sm:inline">Qual seu</span> Custo de
+                vida<span className="sm:hidden">:</span>
+                <span className="hidden sm:inline"> mensal?</span>
               </h2>
-              <div className="flex">
-                <span className="bg-gray-100 border-2 border-r-0 border-gray-300 px-4 py-4 rounded-l-xl font-bold text-gray-700 text-lg">
+              <div className="flex w-full">
+                <span className="bg-gray-100 border-2 border-r-0 border-gray-300 px-3 sm:px-4 py-3 sm:py-4 rounded-l-xl font-bold text-gray-700 text-base sm:text-lg flex-shrink-0">
                   R$
                 </span>
                 <input
@@ -178,7 +187,7 @@ function App() {
                       0
                     );
                   }}
-                  className="flex-1 px-4 py-4 border-2 border-gray-300 rounded-r-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all text-lg font-semibold"
+                  className="flex-1 min-w-0 px-3 sm:px-4 py-3 sm:py-4 border-2 border-gray-300 rounded-r-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all text-base sm:text-lg font-semibold"
                   placeholder="2000"
                 />
               </div>
@@ -205,12 +214,12 @@ function App() {
                   🔄 Resetar
                 </button>
               </div>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Reserva (%)
                   </label>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-3">
                     <input
                       type="range"
                       min="0"
@@ -221,7 +230,7 @@ function App() {
                       }
                       className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
                     />
-                    <span className="bg-blue-100 text-blue-600 px-2 py-1 rounded font-semibold text-sm min-w-12 text-center">
+                    <span className="bg-blue-100 text-blue-600 px-3 py-1 rounded font-semibold text-sm min-w-14 text-center">
                       {savingsPercent}%
                     </span>
                   </div>
@@ -230,7 +239,7 @@ function App() {
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Extras (%)
                   </label>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-3">
                     <input
                       type="range"
                       min="0"
@@ -239,7 +248,7 @@ function App() {
                       onChange={(e) => setExtraPercent(Number(e.target.value))}
                       className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
                     />
-                    <span className="bg-blue-100 text-blue-600 px-2 py-1 rounded font-semibold text-sm min-w-12 text-center">
+                    <span className="bg-blue-100 text-blue-600 px-3 py-1 rounded font-semibold text-sm min-w-14 text-center">
                       {extraPercent}%
                     </span>
                   </div>
@@ -248,7 +257,7 @@ function App() {
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Impostos (%)
                   </label>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-3">
                     <input
                       type="range"
                       min="0"
@@ -257,7 +266,7 @@ function App() {
                       onChange={(e) => setTaxPercent(Number(e.target.value))}
                       className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
                     />
-                    <span className="bg-blue-100 text-blue-600 px-2 py-1 rounded font-semibold text-sm min-w-12 text-center">
+                    <span className="bg-blue-100 text-blue-600 px-3 py-1 rounded font-semibold text-sm min-w-14 text-center">
                       {taxPercent}%
                     </span>
                   </div>
@@ -267,12 +276,16 @@ function App() {
 
             {/* Your Rates - Prominent */}
             <div className="mb-6">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-bold text-gray-800">
-                  💰 Suas Taxas Horárias
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2 sm:gap-0">
+                <h3 className="text-lg md:text-xl font-bold text-gray-800">
+                  💰 <span className="hidden sm:inline">Suas</span> Taxas
+                  <span className="sm:hidden">:</span>
+                  <span className="hidden sm:inline"> Horárias</span>
                 </h3>
-                <div className="text-sm text-gray-600">
-                  📊 Mercado: R$ {adjustedMin}-{adjustedMax}/h •{" "}
+                <div className="text-xs sm:text-sm text-gray-600">
+                  <span className="hidden sm:inline">
+                    📊 Mercado: R$ {adjustedMin}-{adjustedMax}/h •{" "}
+                  </span>
                   <span className="font-semibold text-blue-600">
                     {position}
                   </span>
@@ -280,60 +293,61 @@ function App() {
               </div>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-400 rounded-xl p-4 text-center">
-                  <h4 className="text-sm font-bold mb-2 text-green-700">
-                    🟢 Projeto Normal
+                  <h4 className="text-xs sm:text-sm font-bold mb-2 text-green-700">
+                    🟢 <span className="hidden sm:inline">Projeto</span> Normal
                   </h4>
-                  <div className="text-2xl font-bold text-gray-800 mb-1">
+                  <div className="text-xl sm:text-2xl font-bold text-gray-800 mb-1">
                     {formatCurrency(rates.regular)}/h
                   </div>
-                  <div className="text-sm text-gray-600">
+                  <div className="text-xs sm:text-sm text-gray-600">
                     {formatCurrency(rates.regular / exchangeRate, "USD")}/h
                   </div>
                 </div>
                 <div className="bg-gradient-to-br from-yellow-50 to-amber-50 border-2 border-yellow-400 rounded-xl p-4 text-center">
-                  <h4 className="text-sm font-bold mb-2 text-yellow-700">
-                    🟡 Com Revisões
+                  <h4 className="text-xs sm:text-sm font-bold mb-2 text-yellow-700">
+                    🟡 <span className="hidden sm:inline">Com</span> Revisões
                   </h4>
-                  <div className="text-2xl font-bold text-gray-800 mb-1">
+                  <div className="text-xl sm:text-2xl font-bold text-gray-800 mb-1">
                     {formatCurrency(rates.revision)}/h
                   </div>
-                  <div className="text-sm text-gray-600">
+                  <div className="text-xs sm:text-sm text-gray-600">
                     {formatCurrency(rates.revision / exchangeRate, "USD")}/h
                   </div>
                 </div>
                 <div className="bg-gradient-to-br from-orange-50 to-red-50 border-2 border-orange-400 rounded-xl p-4 text-center">
-                  <h4 className="text-sm font-bold mb-2 text-orange-700">
-                    🟠 Projeto Urgente
+                  <h4 className="text-xs sm:text-sm font-bold mb-2 text-orange-700">
+                    🟠 <span className="hidden sm:inline">Projeto</span> Urgente
                   </h4>
-                  <div className="text-2xl font-bold text-gray-800 mb-1">
+                  <div className="text-xl sm:text-2xl font-bold text-gray-800 mb-1">
                     {formatCurrency(rates.rush)}/h
                   </div>
-                  <div className="text-sm text-gray-600">
+                  <div className="text-xs sm:text-sm text-gray-600">
                     {formatCurrency(rates.rush / exchangeRate, "USD")}/h
                   </div>
                 </div>
                 <div className="bg-gradient-to-br from-red-50 to-pink-50 border-2 border-red-400 rounded-xl p-4 text-center">
-                  <h4 className="text-sm font-bold mb-2 text-red-700">
-                    🔴 Cliente Difícil
+                  <h4 className="text-xs sm:text-sm font-bold mb-2 text-red-700">
+                    🔴 <span className="hidden sm:inline">Cliente</span> Difícil
                   </h4>
-                  <div className="text-2xl font-bold text-gray-800 mb-1">
+                  <div className="text-xl sm:text-2xl font-bold text-gray-800 mb-1">
                     {formatCurrency(rates.difficult)}/h
                   </div>
-                  <div className="text-sm text-gray-600">
+                  <div className="text-xs sm:text-sm text-gray-600">
                     {formatCurrency(rates.difficult / exchangeRate, "USD")}/h
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Revenue Projections & Cost Breakdown - Side by Side */}
-            <div className="grid lg:grid-cols-2 gap-6 mb-6">
+            {/* Revenue Projections & Cost Breakdown - Mobile Responsive */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
               {/* Revenue Projections */}
               <div>
-                <h3 className="text-lg font-bold mb-4 text-gray-800">
-                  📈 Projeção de Receita
+                <h3 className="text-base sm:text-lg font-bold mb-4 text-gray-800">
+                  📈 <span className="hidden sm:inline">Projeção de</span>{" "}
+                  Receita
                 </h3>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-2 sm:gap-3">
                   {[
                     {
                       label: "Por Dia",
@@ -363,7 +377,7 @@ function App() {
                       <div className="text-xs font-bold text-gray-700 mb-1">
                         {item.label}
                       </div>
-                      <div className="text-lg font-bold text-green-600 mb-1">
+                      <div className="text-base sm:text-lg font-bold text-green-600 mb-1">
                         {formatCurrency(item.brl)}
                       </div>
                       <div className="text-xs font-semibold text-blue-600">
@@ -376,8 +390,9 @@ function App() {
 
               {/* Cost Breakdown */}
               <div>
-                <h3 className="text-lg font-bold mb-4 text-gray-800">
-                  📋 Breakdown de Custos
+                <h3 className="text-base sm:text-lg font-bold mb-4 text-gray-800">
+                  📋 <span className="hidden sm:inline">Breakdown de</span>{" "}
+                  Custos
                 </h3>
                 <div className="bg-gradient-to-br from-gray-50 to-slate-50 rounded-lg p-4 border border-gray-200">
                   {[
@@ -410,24 +425,25 @@ function App() {
               </div>
             </div>
 
-            {/* Secondary Actions - Small buttons */}
-            <div className="flex justify-center gap-3 mb-4">
+            {/* Secondary Actions - Mobile Optimized */}
+            <div className="flex justify-center gap-2 sm:gap-3 mb-4">
               <button
                 onClick={() => setShowCalculation(true)}
-                className="text-sm px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-1"
+                className="text-xs sm:text-sm px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-1 font-medium"
               >
-                🧮 Como calculamos?
+                🧮 <span className="hidden sm:inline">Como </span>Calc
+                <span className="hidden sm:inline">ulamos</span>?
               </button>
               <button
                 onClick={() => setShowParameters(true)}
-                className="text-sm px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-1"
+                className="text-xs sm:text-sm px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-1 font-medium"
               >
-                📊 Parâmetros
+                📊 Param<span className="hidden sm:inline">etros</span>
               </button>
             </div>
 
             {/* Primary Action Buttons */}
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-3 gap-2 sm:gap-4">
               <button
                 onClick={() => {
                   const config = {
@@ -442,10 +458,7 @@ function App() {
                     workDays,
                     vacationDays,
                   };
-                  localStorage.setItem(
-                    "brazilianRateCalculatorConfig",
-                    JSON.stringify(config)
-                  );
+                  localStorage.setItem("freelazConfig", JSON.stringify(config));
 
                   // Track save event
                   trackEvent("save_configuration", {
@@ -457,9 +470,11 @@ function App() {
 
                   alert("Configuração salva com sucesso!");
                 }}
-                className="bg-gradient-to-r from-blue-600 to-purple-700 text-white px-4 py-3 rounded-lg font-semibold hover:shadow-lg transition-all transform hover:scale-105"
+                className="bg-gradient-to-r from-blue-600 to-purple-700 text-white px-3 sm:px-4 py-3 rounded-lg font-semibold hover:shadow-lg transition-all transform hover:scale-105 text-sm sm:text-base flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2"
               >
-                💾 Salvar
+                <span className="text-lg sm:text-base">💾</span>
+                <span className="hidden sm:inline">Salvar</span>
+                <span className="sm:hidden text-xs">Salvar</span>
               </button>
               <button
                 onClick={() => {
@@ -468,7 +483,7 @@ function App() {
                   )}/hora (${formatCurrency(
                     rates.regular / exchangeRate,
                     "USD"
-                  )}/hora)\n\nCalculado com a Calculadora de Preços para Freelancers Brasileiros`;
+                  )}/hora)\n\nCalculado com Freelaz - freelaz.com`;
 
                   // Track share event
                   trackEvent("share_results", {
@@ -493,17 +508,20 @@ function App() {
                       );
                   }
                 }}
-                className="bg-gray-600 text-white px-4 py-3 rounded-lg font-semibold hover:shadow-lg transition-all transform hover:scale-105"
+                className="bg-gray-600 text-white px-3 sm:px-4 py-3 rounded-lg font-semibold hover:shadow-lg transition-all transform hover:scale-105 text-sm sm:text-base flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2"
               >
-                🔗 Compartilhar
+                <span className="text-lg sm:text-base">🔗</span>
+                <span className="hidden sm:inline">Compartilhar</span>
+                <span className="sm:hidden text-xs">Comp.</span>
               </button>
               <button
                 onClick={() =>
                   alert("Funcionalidade de PDF em desenvolvimento")
                 }
-                className="bg-green-600 text-white px-4 py-3 rounded-lg font-semibold hover:shadow-lg transition-all transform hover:scale-105"
+                className="bg-green-600 text-white px-3 sm:px-4 py-3 rounded-lg font-semibold hover:shadow-lg transition-all transform hover:scale-105 text-sm sm:text-base flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2"
               >
-                📄 PDF
+                <span className="text-lg sm:text-base">📄</span>
+                <span className="text-xs sm:text-base">PDF</span>
               </button>
             </div>
           </div>

@@ -1,4 +1,4 @@
-# 🇧🇷 Calculadora de Preços para Freelancers Brasileiros
+# 🇧🇷 Freelaz - Calculadora de Preços para Freelancers Brasileiros
 
 ## Plano de Implementação / Implementation Plan
 
@@ -33,7 +33,7 @@ Criar uma **plataforma de inteligência de mercado** para freelancers brasileiro
 - ✅ Responsive design
 - ✅ Hono (API framework)
 - ✅ Cloudflare Pages (frontend hosting) - freelaz.com LIVE
-- ✅ Cloudflare Workers (API hosting) - brazilian-rate-calculator-api.programad.workers.dev
+- ✅ Cloudflare Workers (API hosting) - freelaz-api.programad.workers.dev
 - 🔴 D1 Database (SQLite)
 - 🔴 GitHub Actions (CI/CD)
 
@@ -158,7 +158,7 @@ Criar uma **plataforma de inteligência de mercado** para freelancers brasileiro
 **Cloudflare Workers:**
 
 - ✅ Worker para hospedar aplicação Vite (via Pages)
-- ✅ Worker para API backend - brazilian-rate-calculator-api.programad.workers.dev
+- ✅ Worker para API backend - freelaz-api.programad.workers.dev
 - ✅ CDN global para performance
 - ✅ HTTPS automático
 - 🔴 Rate limiting e proteção
@@ -375,6 +375,6 @@ _Próxima Fase: 🥈 FOUNDATION - Better Auth + Coleta de Dados da Comunidade_
 
 **🚀 DEPLOYED URLS:**
 
-- **Frontend**: https://freelaz.com (Cloudflare Pages)
-- **API**: https://brazilian-rate-calculator-api.programad.workers.dev (Cloudflare Workers)
+- **Frontend**: https://freelaz.com (Cloudflare Pages - freelaz-web)
+- **API**: https://freelaz-api.programad.workers.dev (Cloudflare Workers - freelaz-api)
 - **Analytics**: Google Analytics G-WXQN6BW8QT ativo
