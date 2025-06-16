@@ -1,6 +1,14 @@
 import { useState, useEffect, useRef } from "react";
-import { normalizeText } from "@freelaz/shared";
 import { DropdownPortal } from "./dropdown-portal";
+
+// Helper function to normalize text (remove diacritics and convert to lowercase)
+function normalizeText(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // Remove diacritics
+    .trim();
+}
 
 interface DropdownOption {
   value: string;
@@ -13,6 +21,7 @@ interface CustomDropdownProps {
   options: DropdownOption[];
   placeholder?: string;
   searchable?: boolean;
+  disabled?: boolean;
 }
 
 export function CustomDropdown({
@@ -21,6 +30,7 @@ export function CustomDropdown({
   options,
   placeholder = "Selecione uma opção",
   searchable = false,
+  disabled = false,
 }: CustomDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -137,8 +147,10 @@ export function CustomDropdown({
   return (
     <div className="relative custom-dropdown" ref={containerRef}>
       <div
-        className="w-full p-3 border-2 border-gray-300 rounded-lg focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-200 transition-all cursor-pointer bg-white flex items-center justify-between text-base leading-6 min-h-[3.5rem]"
-        onClick={() => setIsOpen(!isOpen)}
+        className={`w-full p-3 border-2 border-gray-300 rounded-lg focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-200 transition-all cursor-pointer bg-white flex items-center justify-between text-base leading-6 min-h-[3.5rem] ${
+          disabled ? "opacity-50 cursor-not-allowed bg-gray-50" : ""
+        }`}
+        onClick={() => !disabled && setIsOpen(!isOpen)}
       >
         <span className={selectedOption ? "text-gray-900" : "text-gray-500"}>
           {selectedOption?.label || placeholder}
@@ -160,13 +172,15 @@ export function CustomDropdown({
         </svg>
       </div>
 
-      <DropdownPortal
-        isOpen={isOpen}
-        triggerRef={containerRef}
-        position={dropdownPosition}
-      >
-        {dropdownContent}
-      </DropdownPortal>
+      {!disabled && (
+        <DropdownPortal
+          isOpen={isOpen}
+          triggerRef={containerRef}
+          position={dropdownPosition}
+        >
+          {dropdownContent}
+        </DropdownPortal>
+      )}
     </div>
   );
 }

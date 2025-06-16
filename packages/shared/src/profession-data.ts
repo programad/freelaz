@@ -7,7 +7,6 @@ export const professionData = {
       senior: [6000, 12000],
       specialist: [8000, 15000],
     },
-    marketAverage: { min: 45, max: 85 },
   },
   backend: {
     name: { pt: "Desenvolvedor Backend", en: "Backend Developer" },
@@ -17,7 +16,6 @@ export const professionData = {
       senior: [7000, 13000],
       specialist: [9000, 16000],
     },
-    marketAverage: { min: 50, max: 90 },
   },
   fullstack: {
     name: { pt: "Desenvolvedor Full Stack", en: "Full Stack Developer" },
@@ -27,7 +25,6 @@ export const professionData = {
       senior: [7500, 14000],
       specialist: [10000, 18000],
     },
-    marketAverage: { min: 55, max: 95 },
   },
   mobile: {
     name: { pt: "Desenvolvedor Mobile", en: "Mobile Developer" },
@@ -37,7 +34,6 @@ export const professionData = {
       senior: [7000, 13500],
       specialist: [9000, 16500],
     },
-    marketAverage: { min: 50, max: 90 },
   },
   "ux-ui": {
     name: { pt: "Designer UX/UI", en: "UX/UI Designer" },
@@ -47,7 +43,6 @@ export const professionData = {
       senior: [5500, 11000],
       specialist: [7000, 13000],
     },
-    marketAverage: { min: 40, max: 75 },
   },
   copywriter: {
     name: { pt: "Copywriter", en: "Copywriter" },
@@ -57,7 +52,6 @@ export const professionData = {
       senior: [4500, 9000],
       specialist: [6000, 12000],
     },
-    marketAverage: { min: 35, max: 65 },
   },
 };
 

@@ -8,9 +8,11 @@ import {
   type ProfessionKey,
   type StateKey,
 } from "@freelaz/shared";
+import locationRoutes from "./routes/location";
 
 type Bindings = {
   DB: D1Database;
+  LOCATION_CACHE: KVNamespace;
   ENVIRONMENT: string;
 };
 
@@ -79,5 +81,8 @@ app.post("/api/analytics/calculation", async (c) => {
     return c.json({ error: "Failed to process analytics" }, 500);
   }
 });
+
+// Mount location routes
+app.route("/", locationRoutes);
 
 export default app;

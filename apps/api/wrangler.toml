@@ -15,6 +15,12 @@ name = "freelaz-api-staging"
 # database_name = "freelaz"
 # database_id = "your-database-id"
 
+# KV namespace for location caching
+[[kv_namespaces]]
+binding = "LOCATION_CACHE"
+id = "296d1166a9a343978919ff9a44efafa7"
+preview_id = "296d1166a9a343978919ff9a44efafa7"
+
 # Environment variables
 [vars]
 ENVIRONMENT = "development"

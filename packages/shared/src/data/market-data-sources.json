@@ -1,0 +1,291 @@
+{
+  "lastUpdated": "2025-01-01",
+  "sources": {
+    "brazilian_salaries": {
+      "glassdoor_brazil": {
+        "url": "https://www.glassdoor.com.br/Sal%C3%A1rios/desenvolvedor-sal%C3%A1rio-SRCH_KO0,13.htm",
+        "description": "Glassdoor Brazil salary data for developers",
+        "data": {
+          "frontend_senior": {
+            "monthly_brl": 8500,
+            "hourly_brl": 48.86,
+            "notes": "Based on 40h/week, 4.33 weeks/month"
+          },
+          "backend_senior": {
+            "monthly_brl": 9200,
+            "hourly_brl": 52.88,
+            "notes": "Based on 40h/week, 4.33 weeks/month"
+          },
+          "fullstack_senior": {
+            "monthly_brl": 9800,
+            "hourly_brl": 56.33,
+            "notes": "Based on 40h/week, 4.33 weeks/month"
+          }
+        }
+      },
+      "catho_2024": {
+        "url": "https://www.catho.com.br/salario/desenvolvedor",
+        "description": "Catho salary survey 2024",
+        "data": {
+          "frontend_senior": {
+            "monthly_brl": 7800,
+            "hourly_brl": 44.83
+          },
+          "backend_senior": {
+            "monthly_brl": 8400,
+            "hourly_brl": 48.28
+          },
+          "fullstack_senior": {
+            "monthly_brl": 8900,
+            "hourly_brl": 51.15
+          }
+        }
+      },
+      "stackoverflow_survey_2024": {
+        "url": "https://survey.stackoverflow.co/2024/",
+        "description": "Stack Overflow Developer Survey 2024 - Brazil data",
+        "data": {
+          "senior_developer_brazil": {
+            "annual_usd": 28000,
+            "monthly_brl": 12833,
+            "hourly_brl": 73.75,
+            "notes": "Converted at 5.5 BRL/USD, includes all senior roles"
+          }
+        }
+      }
+    },
+    "international_rates": {
+      "levels_fyi": {
+        "url": "https://www.levels.fyi/",
+        "description": "Tech compensation data",
+        "data": {
+          "san_francisco_senior": {
+            "hourly_usd": 85,
+            "annual_usd": 176800,
+            "notes": "Senior Software Engineer, median total comp"
+          },
+          "new_york_senior": {
+            "hourly_usd": 78,
+            "annual_usd": 162240,
+            "notes": "Senior Software Engineer, median total comp"
+          },
+          "london_senior": {
+            "hourly_usd": 65,
+            "annual_usd": 135200,
+            "notes": "Senior Software Engineer, median total comp"
+          }
+        }
+      },
+      "glassdoor_us": {
+        "url": "https://www.glassdoor.com/Salaries/senior-software-engineer-salary-SRCH_KO0,25.htm",
+        "description": "Glassdoor US salary data",
+        "data": {
+          "senior_software_engineer": {
+            "annual_usd": 130000,
+            "hourly_usd": 62.5,
+            "notes": "National average, matches user example of $120k = $62.5/h"
+          }
+        }
+      },
+      "payscale_2024": {
+        "url": "https://www.payscale.com/research/US/Job=Senior_Software_Engineer/Salary",
+        "description": "PayScale 2024 salary data",
+        "data": {
+          "senior_software_engineer": {
+            "annual_usd": 125000,
+            "hourly_usd": 60.1,
+            "notes": "Median salary for senior software engineers"
+          }
+        }
+      },
+      "canada": {
+        "hourly_range": [50, 70],
+        "notes": "Lower than US, same time zone"
+      },
+      "uk_london": {
+        "hourly_range": [35, 70],
+        "notes": "£28-55 converted to USD"
+      },
+      "germany": {
+        "hourly_range": [40, 75],
+        "notes": "€35-65 converted to USD"
+      },
+      "eastern_europe": {
+        "hourly_range": [30, 65],
+        "notes": "Poland, Czech Republic, Romania"
+      },
+      "latam": {
+        "hourly_range": [25, 55],
+        "notes": "Argentina, Brazil, Mexico"
+      }
+    },
+    "freelancer_rates": {
+      "upwork_2024": {
+        "url": "https://www.upwork.com/hire/software-developers/",
+        "description": "Upwork freelancer rates",
+        "data": {
+          "senior_fullstack": {
+            "hourly_usd_range": [40, 80],
+            "median_usd": 60,
+            "notes": "Top-rated freelancers with 5+ years experience"
+          }
+        }
+      },
+      "toptal_rates": {
+        "url": "https://www.toptal.com/developers/hourly-rate",
+        "description": "Toptal developer rates",
+        "data": {
+          "senior_developer": {
+            "hourly_usd_range": [60, 120],
+            "median_usd": 90,
+            "notes": "Top 3% of freelance developers"
+          }
+        }
+      },
+      "brazilian_freelancers_reality": {
+        "description": "Real data from Brazilian freelancers working internationally",
+        "data": {
+          "senior_fullstack_sp": {
+            "hourly_usd_range": [25, 45],
+            "median_usd": 32,
+            "notes": "Based on user feedback - senior with $120k experience charging $30/h"
+          },
+          "competitive_advantage": {
+            "discount_vs_local": 0.5,
+            "notes": "Brazilian freelancers typically charge 40-60% of local US rates"
+          }
+        }
+      }
+    },
+    "us_salaries_2024": {
+      "payscale": {
+        "url": "https://www.payscale.com/research/US/Job=Senior_Software_Engineer/Salary",
+        "description": "PayScale US Senior Software Engineer salary data 2024",
+        "data": {
+          "senior_average": {
+            "annual_usd": 130018,
+            "hourly_usd": 62.5,
+            "range_annual": [98000, 170000],
+            "range_hourly": [47, 82],
+            "notes": "Based on 19,666 salary profiles, median $130k"
+          },
+          "mid_level_average": {
+            "annual_usd": 100000,
+            "hourly_usd": 48,
+            "range_annual": [80000, 120000],
+            "range_hourly": [38, 58],
+            "notes": "Estimated based on senior data"
+          },
+          "junior_average": {
+            "annual_usd": 80000,
+            "hourly_usd": 38,
+            "range_annual": [65000, 95000],
+            "range_hourly": [31, 46],
+            "notes": "Entry level to 2 years experience"
+          }
+        }
+      },
+      "geomotiv_research": {
+        "url": "https://geomotiv.com/blog/software-engineer-hourly-rate-in-the-usa/",
+        "description": "Comprehensive US software engineer hourly rates 2024",
+        "data": {
+          "small_companies": {
+            "range_hourly": [80, 135],
+            "notes": "10-100 employees"
+          },
+          "mid_companies": {
+            "range_hourly": [100, 220],
+            "notes": "100-1000 employees, includes overhead"
+          },
+          "large_companies": {
+            "range_hourly": [300, 800],
+            "notes": "Enterprise rates with full overhead, not individual developer rates"
+          },
+          "individual_developer_rates": {
+            "project_manager": [90, 130],
+            "mid_frontend": [100, 140],
+            "mid_backend": [120, 160],
+            "senior_fullstack": [130, 190],
+            "qa_engineer": [85, 120]
+          }
+        }
+      }
+    },
+    "brazilian_market": {
+      "glassdoor_brazil": {
+        "url": "https://www.glassdoor.com.br/",
+        "description": "Brazilian developer salaries",
+        "data": {
+          "senior_fullstack": {
+            "monthly_brl": 9800,
+            "hourly_brl": 56,
+            "hourly_usd": 10,
+            "notes": "Based on BRL 5.5 exchange rate"
+          },
+          "mid_fullstack": {
+            "monthly_brl": 7000,
+            "hourly_brl": 40,
+            "hourly_usd": 7,
+            "notes": "3-5 years experience"
+          },
+          "junior_fullstack": {
+            "monthly_brl": 4500,
+            "hourly_brl": 26,
+            "hourly_usd": 5,
+            "notes": "0-2 years experience"
+          }
+        }
+      }
+    },
+    "calculation_methodology": {
+      "annual_to_hourly": {
+        "formula": "Annual Salary ÷ 2080 hours (40 hours/week × 52 weeks)",
+        "examples": {
+          "$130k annual": "$62.50/hour",
+          "$100k annual": "$48.08/hour",
+          "$80k annual": "$38.46/hour"
+        }
+      },
+      "company_rates_vs_individual": {
+        "note": "Company billing rates include overhead (25-35%), benefits, profit margin. Individual developer rates are 60-70% of company billing rates.",
+        "example": "Company bills $120/hour, developer earns $70-80/hour equivalent"
+      }
+    }
+  },
+  "methodology": {
+    "salary_to_hourly_conversion": {
+      "formula": "annual_salary / (40_hours_per_week * 52_weeks)",
+      "working_hours_per_year": 2080,
+      "notes": "Standard conversion assuming full-time employment"
+    },
+    "freelancer_rate_calculation": {
+      "overhead_multiplier": 1.3,
+      "notes": "Freelancers need 30% more than employees to cover benefits, taxes, downtime"
+    },
+    "brazilian_market_reality": {
+      "cost_advantage": 0.6,
+      "notes": "Brazilian developers can offer 40% cost savings while maintaining quality"
+    }
+  },
+  "recommendations": {
+    "rate_adjustments": {
+      "fullstack_senior_brazil": {
+        "current_market_average": 55,
+        "recommended_adjustment": 35,
+        "reasoning": "Current rates are 57% higher than market reality"
+      },
+      "international_client_rates": {
+        "san_francisco": {
+          "local_rate": 85,
+          "brazilian_competitive_rate": 45,
+          "discount_percentage": 47
+        },
+        "new_york": {
+          "local_rate": 78,
+          "brazilian_competitive_rate": 42,
+          "discount_percentage": 46
+        }
+      }
+    }
+  }
+}

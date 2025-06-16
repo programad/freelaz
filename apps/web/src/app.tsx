@@ -3,13 +3,21 @@ import {
   professionData,
   stateData,
   formatCurrency,
+  calculateMarketRates,
+  getCompetitivePosition,
   type ProfessionKey,
   type ExperienceLevel,
   type StateKey,
 } from "@freelaz/shared";
 import { ConfigurationModal } from "./components/configuration-modal";
-import { CalculationModal } from "./components/calculation-modal";
+
+import { CalculationBreakdownModal } from "./components/calculation-breakdown-modal";
 import { ParametersInfoModal } from "./components/parameters-info-modal";
+import {
+  ClientLocationInput,
+  type LocationAnalysis,
+} from "./components/client-location-input";
+import { LocationService } from "./services/location-service";
 import {
   GoogleAnalytics,
   useGoogleAnalytics,
@@ -21,13 +29,23 @@ import {
 } from "./hooks/use-local-storage";
 import { useToast } from "./hooks/use-toast";
 import { ToastContainer } from "./components/toast-container";
+import type { LocationData } from "@freelaz/shared";
 
 function App() {
   const [showWizard, setShowWizard] = useState(false);
   const [showCalculation, setShowCalculation] = useState(false);
   const [showParameters, setShowParameters] = useState(false);
+  const [showCalculationBreakdown, setShowCalculationBreakdown] =
+    useState(false);
   const [exchangeRate, setExchangeRate] = useState(5.57);
   const [lastUpdated, setLastUpdated] = useState("Taxa padrão");
+
+  // Client location state
+  const [clientLocation, setClientLocation] = useState<LocationData | null>(
+    null
+  );
+  const [locationAnalysis, setLocationAnalysis] =
+    useState<LocationAnalysis | null>(null);
 
   // Form data - matching the original exactly
   const [profession, setProfession] = useState<ProfessionKey>("fullstack");
@@ -101,8 +119,11 @@ function App() {
   );
 
   // LocalStorage configuration management
-  const { loadConfig, saveConfig, clearConfig, hasConfig } =
-    useLocalStorageConfig(currentConfig, onLoadCallback, onErrorCallback);
+  const { loadConfig, saveConfig, hasConfig } = useLocalStorageConfig(
+    currentConfig,
+    onLoadCallback,
+    onErrorCallback
+  );
 
   // Load saved configuration on app start - only once
   const hasLoadedConfig = useRef(false);
@@ -163,35 +184,175 @@ function App() {
   const workingHoursPerMonth = workingHoursPerYear / 12;
   const baseRate = grossMonthlyNeeds / workingHoursPerMonth;
 
-  const rates = {
-    regular: baseRate * 1.0,
-    revision: baseRate * 1.25,
-    rush: baseRate * 1.5,
-    difficult: baseRate * 2.0,
+  // Location-adjusted rates with enhanced calculation
+  const locationAdjustment = clientLocation
+    ? LocationService.calculateLocationAdjustment(
+        baseRate,
+        clientLocation,
+        state
+      )
+    : null;
+
+  // Enhanced tax calculation for international work
+  const getAdjustedTaxRate = () => {
+    if (!clientLocation) return taxPercent;
+
+    // International clients may require different tax treatment
+    if (clientLocation.country !== "Brazil") {
+      // For international clients, consider:
+      // - Potential for MEI (6% to 11.2%) vs regular taxation
+      // - Export of services benefits
+      // - Different tax brackets
+      return Math.max(taxPercent * 0.7, 6); // Minimum 6% for MEI, up to 30% reduction
+    }
+
+    // For Brazilian clients in different states, keep current tax rate
+    return taxPercent;
   };
 
-  // Revenue projections
-  const dailyRevenue = baseRate * workHours;
+  const adjustedTaxPercent = getAdjustedTaxRate();
+
+  // Recalculate with adjusted tax rate
+  const grossMonthlyNeedsAdjusted =
+    netMonthlyNeeds / (1 - adjustedTaxPercent / 100);
+  const baseRateWithAdjustedTax =
+    grossMonthlyNeedsAdjusted / workingHoursPerMonth;
+
+  // Final rate calculation with location adjustment
+  let finalBaseRate = baseRateWithAdjustedTax;
+
+  if (locationAdjustment) {
+    // Apply location adjustment to the tax-adjusted rate
+    finalBaseRate = locationAdjustment.adjustedRate * exchangeRate;
+  }
+
+  // Calculate potential gains/losses with proper tax consideration
+  const calculatePotentialGains = () => {
+    if (!locationAdjustment) return null;
+
+    // Calculate revenue with base rate (no location adjustment)
+    const baseMonthlyRevenue = baseRateWithAdjustedTax * workingHoursPerMonth;
+
+    // Calculate revenue with location-adjusted rate
+    const adjustedMonthlyRevenue = finalBaseRate * workingHoursPerMonth;
+
+    // Calculate taxes on both scenarios
+    const baseTaxes = baseMonthlyRevenue * (adjustedTaxPercent / 100);
+    const adjustedTaxes = adjustedMonthlyRevenue * (adjustedTaxPercent / 100);
+
+    // Net revenue after taxes
+    const baseNetRevenue = baseMonthlyRevenue - baseTaxes;
+    const adjustedNetRevenue = adjustedMonthlyRevenue - adjustedTaxes;
+
+    const monthlyDifference = adjustedNetRevenue - baseNetRevenue;
+    const yearlyDifference = monthlyDifference * 12;
+    const percentageChange =
+      ((adjustedNetRevenue - baseNetRevenue) / baseNetRevenue) * 100;
+
+    return {
+      monthlyDifference,
+      yearlyDifference,
+      percentageChange,
+      isGain: monthlyDifference > 0,
+      taxSavings:
+        clientLocation?.country !== "Brazil"
+          ? taxPercent - adjustedTaxPercent
+          : 0,
+      baseNetRevenue,
+      adjustedNetRevenue,
+    };
+  };
+
+  const potentialGains = calculatePotentialGains();
+
+  const rates = {
+    regular: finalBaseRate * 1.0,
+    revision: finalBaseRate * 1.25,
+    rush: finalBaseRate * 1.5,
+    difficult: finalBaseRate * 2.0,
+  };
+
+  // Handle client location changes
+  const handleLocationChange = useCallback(
+    (location: LocationData | null) => {
+      setClientLocation(location);
+      if (location) {
+        trackEvent("client_location_selected", {
+          city: location.city,
+          country: location.country,
+          cost_of_living: location.costOfLiving,
+          purchasing_power: location.purchasingPowerIndex,
+        });
+      }
+    },
+    [trackEvent]
+  );
+
+  const handleLocationAnalysis = useCallback(
+    (analysis: LocationAnalysis | null) => {
+      if (analysis) {
+        // Use the location data from the analysis instead of clientLocation state
+        // to avoid React state timing issues
+        const adjustment = LocationService.calculateLocationAdjustment(
+          baseRate,
+          analysis.location, // Use analysis.location instead of clientLocation
+          state
+        );
+
+        const updatedAnalysis = {
+          ...analysis,
+          adjustment,
+        };
+
+        setLocationAnalysis(updatedAnalysis);
+
+        trackEvent("location_analysis_completed", {
+          city: analysis.location.city,
+          country: analysis.location.country,
+          rate_multiplier: adjustment.multiplier,
+          adjusted_rate_usd: Math.round(adjustment.adjustedRate),
+          competitive_position: adjustment.comparison.competitivePosition,
+        });
+      } else {
+        setLocationAnalysis(null);
+      }
+    },
+    [baseRate, state, trackEvent] // Remove clientLocation from dependencies
+  );
+
+  // Revenue projections (using location-adjusted rate if available)
+  const effectiveRate = finalBaseRate;
+  const dailyRevenue = effectiveRate * workHours;
   const weeklyRevenue = dailyRevenue * workDays;
   const monthlyRevenue = weeklyRevenue * 4.33;
   const yearlyRevenue = monthlyRevenue * 12;
 
-  // Market comparison
-  const marketRange = professionData[profession]?.marketAverage;
-  const adjustedMin = Math.round(
-    (marketRange?.min || 50) * (costOfLivingIndex / 100)
+  // Market comparison using new realistic rates
+  const marketRange = calculateMarketRates(
+    profession,
+    experienceLevel,
+    costOfLivingIndex
   );
-  const adjustedMax = Math.round(
-    (marketRange?.max || 80) * (costOfLivingIndex / 100)
+  const avgRate = (marketRange.min + marketRange.max) / 2;
+
+  // Get competitive position (prioritize client location if available)
+  const competitiveAnalysis = getCompetitivePosition(
+    finalBaseRate / 5.5, // Convert BRL to USD for comparison
+    clientLocation,
+    experienceLevel
   );
-  const avgRate = (adjustedMin + adjustedMax) / 2;
-  let position = "Competitivo";
-  if (baseRate < adjustedMin * 0.8) {
-    position = "Abaixo do mercado";
-  } else if (baseRate > adjustedMax * 1.2) {
-    position = "Acima do mercado";
-  } else if (baseRate > avgRate) {
-    position = "Acima da média";
+
+  let position = competitiveAnalysis.position;
+
+  // Fallback to Brazilian market comparison if no client location
+  if (!clientLocation) {
+    if (baseRate < marketRange.min * 0.8) {
+      position = "Abaixo do mercado";
+    } else if (baseRate > marketRange.max * 1.2) {
+      position = "Acima do mercado";
+    } else if (baseRate > avgRate) {
+      position = "Acima da média";
+    }
   }
 
   return (
@@ -416,6 +577,135 @@ function App() {
               </div>
             </div>
 
+            {/* Client Location Intelligence */}
+            <ClientLocationInput
+              onLocationChange={handleLocationChange}
+              onLocationAnalysis={handleLocationAnalysis}
+              className="mb-6"
+            />
+
+            {/* Location-based rate adjustment display */}
+            {locationAnalysis && potentialGains && (
+              <div className="mb-6 p-4 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl">
+                <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center">
+                  🎯 Impacto da Localização do Cliente
+                </h3>
+
+                {/* Rate Comparison */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                  <div className="bg-white p-3 rounded-lg border">
+                    <div className="text-sm text-gray-600 mb-1">
+                      Taxa Base (Brasil):
+                    </div>
+                    <div className="text-lg font-bold text-gray-800">
+                      {formatCurrency(baseRate)}/h
+                    </div>
+                    <div className="text-xs text-blue-600">
+                      {formatCurrency(baseRate / exchangeRate, "USD")}/h
+                    </div>
+                  </div>
+                  <div className="bg-white p-3 rounded-lg border">
+                    <div className="text-sm text-gray-600 mb-1">
+                      Taxa Ajustada:
+                    </div>
+                    <div className="text-lg font-bold text-green-600">
+                      {formatCurrency(finalBaseRate)}/h
+                    </div>
+                    <div className="text-xs text-green-700 font-semibold">
+                      {formatCurrency(finalBaseRate / exchangeRate, "USD")}/h
+                    </div>
+                  </div>
+                  <div className="bg-white p-3 rounded-lg border">
+                    <div className="text-sm text-gray-600 mb-1">
+                      Impostos Ajustados:
+                    </div>
+                    <div className="text-lg font-bold text-purple-600">
+                      {adjustedTaxPercent.toFixed(1)}%
+                    </div>
+                    <div className="text-xs text-purple-700">
+                      {potentialGains.taxSavings > 0 && (
+                        <>
+                          -{potentialGains.taxSavings.toFixed(1)}% vs nacional
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Potential Gains/Losses */}
+                <div className="bg-white p-4 rounded-lg border mb-3">
+                  <h4 className="font-semibold text-gray-800 mb-2 flex items-center">
+                    {potentialGains.isGain
+                      ? "📈 Ganho Potencial"
+                      : "📉 Redução Potencial"}
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <div className="text-sm text-gray-600">
+                        Diferença Mensal:
+                      </div>
+                      <div
+                        className={`text-xl font-bold ${
+                          potentialGains.isGain
+                            ? "text-green-600"
+                            : "text-red-600"
+                        }`}
+                      >
+                        {potentialGains.isGain ? "+" : ""}
+                        {formatCurrency(potentialGains.monthlyDifference)}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {potentialGains.percentageChange > 0 ? "+" : ""}
+                        {potentialGains.percentageChange.toFixed(1)}%
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-sm text-gray-600">
+                        Diferença Anual:
+                      </div>
+                      <div
+                        className={`text-xl font-bold ${
+                          potentialGains.isGain
+                            ? "text-green-600"
+                            : "text-red-600"
+                        }`}
+                      >
+                        {potentialGains.isGain ? "+" : ""}
+                        {formatCurrency(potentialGains.yearlyDifference)}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        vs trabalhar apenas no Brasil
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Reasoning and Competitive Analysis */}
+                <div className="bg-white p-3 rounded-lg border">
+                  <div className="text-sm font-medium text-gray-800 mb-2">
+                    💡 {locationAnalysis.adjustment.reasoning}
+                  </div>
+                  <div className="text-xs text-gray-600">
+                    <strong>Vantagem competitiva:</strong>{" "}
+                    {locationAnalysis.adjustment.comparison.yourAdvantage}% mais
+                    barato que desenvolvedores locais (
+                    {formatCurrency(
+                      locationAnalysis.adjustment.comparison.localSeniorRate,
+                      "USD"
+                    )}
+                    /h)
+                  </div>
+                  {clientLocation?.country !== "Brazil" && (
+                    <div className="text-xs text-purple-600 mt-1">
+                      <strong>Benefício fiscal:</strong> Exportação de serviços
+                      pode reduzir impostos para {adjustedTaxPercent.toFixed(1)}
+                      %
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Your Rates - Prominent */}
             <div className="mb-6">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2 sm:gap-0">
@@ -423,10 +713,29 @@ function App() {
                   💰 <span className="hidden sm:inline">Suas</span> Taxas
                   <span className="sm:hidden">:</span>
                   <span className="hidden sm:inline"> Horárias</span>
+                  {locationAnalysis && (
+                    <span className="text-sm font-normal text-green-600 ml-2">
+                      (Ajustadas para {clientLocation?.city})
+                    </span>
+                  )}
                 </h3>
+                <button
+                  onClick={() => {
+                    setShowCalculationBreakdown(true);
+                    trackEvent("open_calculation_breakdown", {
+                      has_location_adjustment: !!locationAnalysis,
+                      base_rate: Math.round(baseRate),
+                      final_rate: Math.round(finalBaseRate),
+                    });
+                  }}
+                  className="text-xs px-3 py-1 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-all"
+                >
+                  📊 Ver Cálculo Detalhado
+                </button>
                 <div className="text-xs sm:text-sm text-gray-600">
                   <span className="hidden sm:inline">
-                    📊 Mercado: R$ {adjustedMin}-{adjustedMax}/h •{" "}
+                    📊 Mercado: R$ {Math.round(marketRange.min * 5.5)}-
+                    {Math.round(marketRange.max * 5.5)}/h •{" "}
                   </span>
                   <span className="font-semibold text-blue-600">
                     {position}
@@ -576,7 +885,9 @@ function App() {
                     {
                       label: "Impostos:",
                       value:
-                        netMonthlyNeeds * (taxPercent / (100 - taxPercent)),
+                        finalBaseRate *
+                        workingHoursPerMonth *
+                        (adjustedTaxPercent / 100),
                     },
                   ].map((item, index) => (
                     <div
@@ -592,8 +903,12 @@ function App() {
                     </div>
                   ))}
                   <div className="flex justify-between py-3 mt-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-b-lg px-4 -mx-4 -mb-4 font-bold border border-purple-600">
-                    <span>Total Bruto:</span>
-                    <span>{formatCurrency(grossMonthlyNeeds)}</span>
+                    <span>
+                      Total Bruto{locationAnalysis ? " (Ajustado)" : ""}:
+                    </span>
+                    <span>
+                      {formatCurrency(finalBaseRate * workingHoursPerMonth)}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -603,16 +918,31 @@ function App() {
             <div className="flex justify-center gap-2 sm:gap-3 mb-4">
               <button
                 onClick={() => {
-                  setShowCalculation(true);
-                  trackEvent("open_calculation_modal", {
-                    current_hourly_rate: Math.round(baseRate),
+                  setShowCalculationBreakdown(true);
+                  trackEvent("open_calculation_breakdown", {
+                    current_hourly_rate: Math.round(finalBaseRate),
                     monthly_expenses: monthlyExpenses,
+                    has_client_location: !!clientLocation,
                   });
                 }}
                 className="text-xs sm:text-sm px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-1 font-medium"
               >
                 🧮 <span className="sm:hidden">Cálculo</span>
                 <span className="hidden sm:inline">Como Calculamos?</span>
+              </button>
+              <button
+                onClick={() => {
+                  setShowCalculationBreakdown(true);
+                  trackEvent("open_calculation_breakdown", {
+                    has_client_location: !!clientLocation,
+                    current_hourly_rate: Math.round(finalBaseRate),
+                    monthly_expenses: monthlyExpenses,
+                  });
+                }}
+                className="text-xs sm:text-sm px-3 py-2 bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 border border-green-200 rounded-lg hover:from-green-200 hover:to-emerald-200 transition-colors flex items-center gap-1 font-medium"
+              >
+                📋 <span className="sm:hidden">Detalhes</span>
+                <span className="hidden sm:inline">Cálculo Detalhado</span>
               </button>
               <button
                 onClick={() => {
@@ -776,11 +1106,23 @@ function App() {
         />
 
         {/* Calculation Explanation Modal */}
-        <CalculationModal
-          isOpen={showCalculation}
+
+        {/* Parameters Info Modal */}
+        <ParametersInfoModal
+          isOpen={showParameters}
           onClose={() => {
-            setShowCalculation(false);
-            trackEvent("close_calculation_modal");
+            setShowParameters(false);
+            trackEvent("close_parameters_modal");
+          }}
+          currentState={state}
+        />
+
+        {/* Calculation Breakdown Modal */}
+        <CalculationBreakdownModal
+          isOpen={showCalculationBreakdown}
+          onClose={() => {
+            setShowCalculationBreakdown(false);
+            trackEvent("close_calculation_breakdown");
           }}
           monthlyExpenses={monthlyExpenses}
           costOfLivingIndex={costOfLivingIndex}
@@ -791,22 +1133,21 @@ function App() {
           extraAmount={extraAmount}
           netMonthlyNeeds={netMonthlyNeeds}
           taxPercent={taxPercent}
+          adjustedTaxPercent={adjustedTaxPercent}
           grossMonthlyNeeds={grossMonthlyNeeds}
+          grossMonthlyNeedsAdjusted={grossMonthlyNeedsAdjusted}
           workingDaysPerYear={workingDaysPerYear}
           workingHoursPerYear={workingHoursPerYear}
           workingHoursPerMonth={workingHoursPerMonth}
           baseRate={baseRate}
+          baseRateWithAdjustedTax={baseRateWithAdjustedTax}
+          finalBaseRate={finalBaseRate}
           rates={rates}
-        />
-
-        {/* Parameters Info Modal */}
-        <ParametersInfoModal
-          isOpen={showParameters}
-          onClose={() => {
-            setShowParameters(false);
-            trackEvent("close_parameters_modal");
-          }}
-          currentState={state}
+          clientLocation={clientLocation}
+          locationAnalysis={locationAnalysis}
+          potentialGains={potentialGains}
+          exchangeRate={exchangeRate}
+          state={state}
         />
       </div>
 
