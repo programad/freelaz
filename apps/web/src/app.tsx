@@ -33,7 +33,6 @@ import type { LocationData } from "@freelaz/shared";
 
 function App() {
   const [showWizard, setShowWizard] = useState(false);
-  const [showCalculation, setShowCalculation] = useState(false);
   const [showParameters, setShowParameters] = useState(false);
   const [showCalculationBreakdown, setShowCalculationBreakdown] =
     useState(false);
