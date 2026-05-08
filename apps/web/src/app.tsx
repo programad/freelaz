@@ -10,15 +10,24 @@ import {
   detectRegimeFromRate,
   PAYMENT_RAILS,
   PAYMENT_RAIL_KEYS,
+  getCityOffset,
+  computeOverlap,
   SPECIALTIES,
   SPECIALTY_KEYS,
   sumSpecialtyPremium,
+  INDUSTRIES,
+  INDUSTRY_KEYS,
+  CLIENT_TYPES,
+  CLIENT_TYPE_KEYS,
+  segmentPremium,
   type ProfessionKey,
   type ExperienceLevel,
   type StateKey,
   type TaxRegimeKey,
   type PaymentRailKey,
   type SpecialtyKey,
+  type IndustryKey,
+  type ClientTypeKey,
 } from "@freelaz/shared";
 import { ConfigurationModal } from "./components/configuration-modal";
 import { CalculationBreakdownModal } from "./components/calculation-breakdown-modal";
@@ -34,6 +43,7 @@ import {
 } from "./components/google-analytics";
 import { Footer } from "./components/footer";
 import { EmailSignup } from "./components/email-signup";
+import { InstallPrompt } from "./components/install-prompt";
 import {
   useLocalStorageConfig,
   type FreelazConfig,
@@ -102,6 +112,12 @@ function App() {
       .map((s) => s.trim() as SpecialtyKey)
       .filter((s) => s in SPECIALTIES);
   });
+  const [industry, setIndustry] = useState<IndustryKey>(
+    (urlSeed.industry as IndustryKey | undefined) ?? "none"
+  );
+  const [clientType, setClientType] = useState<ClientTypeKey>(
+    (urlSeed.clientType as ClientTypeKey | undefined) ?? "none"
+  );
   const [workHours, setWorkHours] = useState(
     (urlSeed.hours as number | undefined) ?? 8
   );
@@ -201,6 +217,8 @@ function App() {
     rail: paymentRail,
     buffer: currencyBuffer,
     specialties: specialties.join(","),
+    industry,
+    clientType,
   });
 
   const handleRegimeChange = useCallback(
@@ -288,6 +306,7 @@ function App() {
   const paymentFeePercent = PAYMENT_RAILS[paymentRail].feePercent;
   const effectiveExchangeRate = exchangeRate * (1 - currencyBuffer / 100);
   const specialtyPremiumPercent = sumSpecialtyPremium(specialties);
+  const segmentAdjustmentPercent = segmentPremium(industry, clientType);
 
   const result = calculate({
     profession,
@@ -304,6 +323,7 @@ function App() {
     clientLocation,
     paymentFeePercent,
     specialtyPremiumPercent,
+    segmentAdjustmentPercent,
   });
 
   const {
@@ -817,6 +837,80 @@ function App() {
               </p>
             </div>
 
+            <div className="mb-6">
+              <div className="flex justify-between items-baseline mb-3">
+                <h3 className="text-lg font-bold text-gray-800">
+                  🏭 Indústria & Tipo de Cliente
+                </h3>
+                {segmentAdjustmentPercent !== 0 && (
+                  <span
+                    className={`text-sm font-semibold ${
+                      segmentAdjustmentPercent > 0
+                        ? "text-green-700"
+                        : "text-orange-700"
+                    }`}
+                  >
+                    {segmentAdjustmentPercent > 0 ? "+" : ""}
+                    {segmentAdjustmentPercent}% na taxa
+                  </span>
+                )}
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <label className="text-sm">
+                  <span className="block font-semibold text-gray-700 mb-1">
+                    Indústria
+                  </span>
+                  <select
+                    value={industry}
+                    onChange={(e) => {
+                      const v = e.target.value as IndustryKey;
+                      setIndustry(v);
+                      trackEvent("change_industry", { industry: v });
+                    }}
+                    className="w-full p-2 border-2 border-gray-300 rounded-lg"
+                  >
+                    {INDUSTRY_KEYS.map((k) => (
+                      <option key={k} value={k}>
+                        {INDUSTRIES[k].label}
+                        {INDUSTRIES[k].premium !== 0 &&
+                          ` (${
+                            INDUSTRIES[k].premium > 0 ? "+" : ""
+                          }${INDUSTRIES[k].premium}%)`}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="text-sm">
+                  <span className="block font-semibold text-gray-700 mb-1">
+                    Tipo de cliente
+                  </span>
+                  <select
+                    value={clientType}
+                    onChange={(e) => {
+                      const v = e.target.value as ClientTypeKey;
+                      setClientType(v);
+                      trackEvent("change_client_type", { clientType: v });
+                    }}
+                    className="w-full p-2 border-2 border-gray-300 rounded-lg"
+                  >
+                    {CLIENT_TYPE_KEYS.map((k) => (
+                      <option key={k} value={k}>
+                        {CLIENT_TYPES[k].label}
+                        {CLIENT_TYPES[k].premium !== 0 &&
+                          ` (${
+                            CLIENT_TYPES[k].premium > 0 ? "+" : ""
+                          }${CLIENT_TYPES[k].premium}%)`}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+              <p className="text-xs text-gray-600 mt-2">
+                Indústrias regulamentadas e clientes diretos sustentam taxas mais
+                altas. Marketplaces e agências reduzem a margem.
+              </p>
+            </div>
+
             <ClientLocationInput
               onLocationChange={handleLocationChange}
               onLocationAnalysis={handleLocationAnalysis}
@@ -941,6 +1035,34 @@ function App() {
                       %
                     </div>
                   )}
+                  {(() => {
+                    if (!clientLocation) return null;
+                    const offset = getCityOffset(
+                      clientLocation.country,
+                      clientLocation.region
+                    );
+                    if (offset === null) return null;
+                    const overlap = computeOverlap(offset);
+                    if (overlap.hours <= 0) {
+                      return (
+                        <div className="text-xs text-orange-700 mt-1">
+                          <strong>Fuso:</strong> sem overlap natural com
+                          horário comercial brasileiro — combine janelas
+                          assíncronas.
+                        </div>
+                      );
+                    }
+                    return (
+                      <div className="text-xs text-blue-700 mt-1">
+                        <strong>Fuso:</strong> {overlap.hours}h de overlap (BRT{" "}
+                        {Math.round(overlap.spStart)}h–
+                        {Math.round(overlap.spEnd)}h ↔ local{" "}
+                        {Math.round(overlap.clientStart)}h–
+                        {Math.round(overlap.clientEnd)}h). Bom para reuniões
+                        síncronas.
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
             )}
@@ -1469,8 +1591,8 @@ function App() {
 
       <Footer />
 
-      {/* Toast Container */}
       <ToastContainer toasts={toasts} removeToast={removeToast} />
+      <InstallPrompt />
     </div>
   );
 }

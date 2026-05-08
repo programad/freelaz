@@ -21,6 +21,7 @@ export interface CalculatorInput {
   clientLocation?: LocationData | null;
   paymentFeePercent?: number;
   specialtyPremiumPercent?: number;
+  segmentAdjustmentPercent?: number;
 }
 
 export interface LocationAdjustment {
@@ -159,6 +160,7 @@ export const calculate = (input: CalculatorInput): CalculatorResult => {
     clientLocation,
     paymentFeePercent = 0,
     specialtyPremiumPercent = 0,
+    segmentAdjustmentPercent = 0,
   } = input;
 
   const costOfLivingIndex = stateData[state]?.costIndex ?? 100;
@@ -194,8 +196,13 @@ export const calculate = (input: CalculatorInput): CalculatorResult => {
       ? 1 / (1 - paymentFeePercent / 100)
       : 1;
   const specialtyMultiplier = 1 + Math.max(0, specialtyPremiumPercent) / 100;
+  const segmentMultiplier =
+    1 + Math.max(-30, Math.min(30, segmentAdjustmentPercent)) / 100;
   const finalBaseRate =
-    preFeeBaseRate * paymentFeeMultiplier * specialtyMultiplier;
+    preFeeBaseRate *
+    paymentFeeMultiplier *
+    specialtyMultiplier *
+    segmentMultiplier;
 
   let potentialGains: PotentialGains | null = null;
   if (locationAdjustment) {
