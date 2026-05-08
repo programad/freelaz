@@ -10,6 +10,9 @@ export * from "./market-rates.js";
 export * from "./i18n.js";
 export * from "./insights.js";
 export * from "./calculator.js";
+export * from "./tax-regimes.js";
+export * from "./payment-rails.js";
+export * from "./specialties.js";
 
 // Types (re-export for convenience)
 export type { ProfessionKey, ExperienceLevel } from "./profession-data.js";

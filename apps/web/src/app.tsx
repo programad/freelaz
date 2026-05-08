@@ -1,13 +1,24 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
   professionData,
   stateData,
   formatCurrency,
   calculate,
   calculateLocationAdjustment,
+  TAX_REGIMES,
+  TAX_REGIME_KEYS,
+  detectRegimeFromRate,
+  PAYMENT_RAILS,
+  PAYMENT_RAIL_KEYS,
+  SPECIALTIES,
+  SPECIALTY_KEYS,
+  sumSpecialtyPremium,
   type ProfessionKey,
   type ExperienceLevel,
   type StateKey,
+  type TaxRegimeKey,
+  type PaymentRailKey,
+  type SpecialtyKey,
 } from "@freelaz/shared";
 import { ConfigurationModal } from "./components/configuration-modal";
 import { CalculationBreakdownModal } from "./components/calculation-breakdown-modal";
@@ -65,8 +76,29 @@ function App() {
     (urlSeed.extras as number | undefined) ?? 10
   );
   const [taxPercent, setTaxPercent] = useState(
-    (urlSeed.tax as number | undefined) ?? 15
+    (urlSeed.tax as number | undefined) ?? TAX_REGIMES.simples.rate ?? 15
   );
+  const [taxRegime, setTaxRegime] = useState<TaxRegimeKey>(
+    (urlSeed.regime as TaxRegimeKey | undefined) ??
+      (detectRegimeFromRate(
+        (urlSeed.tax as number | undefined) ?? TAX_REGIMES.simples.rate ?? 15
+      ) ??
+        "simples")
+  );
+  const [paymentRail, setPaymentRail] = useState<PaymentRailKey>(
+    (urlSeed.rail as PaymentRailKey | undefined) ?? "wise"
+  );
+  const [currencyBuffer, setCurrencyBuffer] = useState<number>(
+    (urlSeed.buffer as number | undefined) ?? 0
+  );
+  const [specialties, setSpecialties] = useState<SpecialtyKey[]>(() => {
+    const raw = urlSeed.specialties as string | undefined;
+    if (!raw) return [];
+    return raw
+      .split(",")
+      .map((s) => s.trim() as SpecialtyKey)
+      .filter((s) => s in SPECIALTIES);
+  });
   const [workHours, setWorkHours] = useState(
     (urlSeed.hours as number | undefined) ?? 8
   );
@@ -162,7 +194,21 @@ function App() {
     hours: workHours,
     days: workDays,
     vacation: vacationDays,
+    regime: taxRegime,
+    rail: paymentRail,
+    buffer: currencyBuffer,
+    specialties: specialties.join(","),
   });
+
+  const handleRegimeChange = useCallback(
+    (regime: TaxRegimeKey) => {
+      setTaxRegime(regime);
+      const rate = TAX_REGIMES[regime].rate;
+      if (rate !== null) setTaxPercent(rate);
+      trackEvent("change_tax_regime", { regime, rate });
+    },
+    [trackEvent]
+  );
 
   useEffect(() => {
     trackEvent("page_load", {
@@ -236,6 +282,10 @@ function App() {
     fetchExchangeRate();
   }, [trackEvent]);
 
+  const paymentFeePercent = PAYMENT_RAILS[paymentRail].feePercent;
+  const effectiveExchangeRate = exchangeRate * (1 - currencyBuffer / 100);
+  const specialtyPremiumPercent = sumSpecialtyPremium(specialties);
+
   const result = calculate({
     profession,
     experienceLevel,
@@ -247,8 +297,10 @@ function App() {
     workHours,
     workDays,
     vacationDays,
-    exchangeRate,
+    exchangeRate: effectiveExchangeRate,
     clientLocation,
+    paymentFeePercent,
+    specialtyPremiumPercent,
   });
 
   const {
@@ -268,6 +320,49 @@ function App() {
     monthlyRevenue,
     yearlyRevenue,
   } = result;
+
+  const regimeComparison = useMemo(() => {
+    return TAX_REGIME_KEYS.filter((key) => key !== "custom").map((key) => {
+      const regime = TAX_REGIMES[key];
+      const rate = regime.rate ?? taxPercent;
+      const r = calculate({
+        profession,
+        experienceLevel,
+        state,
+        monthlyExpenses,
+        savingsPercent,
+        extraPercent,
+        taxPercent: rate,
+        workHours,
+        workDays,
+        vacationDays,
+        exchangeRate,
+        clientLocation,
+      });
+      const yearlyNet = r.yearlyRevenue * (1 - r.adjustedTaxPercent / 100);
+      return {
+        key,
+        label: regime.label,
+        rate: r.adjustedTaxPercent,
+        hourlyBRL: r.rates.regular,
+        monthlyNet: yearlyNet / 12,
+        yearlyNet,
+      };
+    });
+  }, [
+    profession,
+    experienceLevel,
+    state,
+    monthlyExpenses,
+    savingsPercent,
+    extraPercent,
+    taxPercent,
+    workHours,
+    workDays,
+    vacationDays,
+    exchangeRate,
+    clientLocation,
+  ]);
 
   const handleLocationChange = useCallback(
     (location: LocationData | null) => {
@@ -504,6 +599,7 @@ function App() {
                       type="range"
                       min="0"
                       max="40"
+                      step="0.1"
                       value={taxPercent}
                       onChange={(e) => {
                         const newValue = Number(e.target.value);
@@ -512,18 +608,212 @@ function App() {
                           new_value: newValue,
                         });
                         setTaxPercent(newValue);
+                        setTaxRegime(detectRegimeFromRate(newValue) ?? "custom");
                       }}
                       className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
                     />
                     <span className="bg-blue-100 text-blue-600 px-3 py-1 rounded font-semibold text-sm min-w-14 text-center">
-                      {taxPercent}%
+                      {taxPercent.toFixed(taxPercent % 1 === 0 ? 0 : 1)}%
                     </span>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Client Location Intelligence */}
+            <div className="mb-6">
+              <h3 className="text-lg font-bold text-gray-800 mb-3">
+                🧾 Regime Tributário
+              </h3>
+              <div className="flex flex-wrap gap-2 mb-2">
+                {TAX_REGIME_KEYS.map((key) => {
+                  const regime = TAX_REGIMES[key];
+                  const active = taxRegime === key;
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => handleRegimeChange(key)}
+                      className={`px-3 py-2 rounded-lg text-sm font-semibold border transition-all ${
+                        active
+                          ? "bg-blue-600 text-white border-blue-600"
+                          : "bg-white text-gray-700 border-gray-300 hover:border-blue-400"
+                      }`}
+                    >
+                      {regime.label}
+                      {regime.rate !== null && (
+                        <span className="ml-1 opacity-75">
+                          ({regime.rate}%)
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-xs text-gray-600 mb-3">
+                {TAX_REGIMES[taxRegime].hint}
+              </p>
+
+              <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-xl p-4">
+                <div className="text-sm font-semibold text-gray-800 mb-3">
+                  📊 Comparação de regimes (anual líquido)
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {regimeComparison.map((r) => {
+                    const isActive = r.key === taxRegime;
+                    return (
+                      <div
+                        key={r.key}
+                        className={`p-3 rounded-lg border ${
+                          isActive
+                            ? "bg-white border-blue-500 shadow-sm"
+                            : "bg-white/70 border-gray-200"
+                        }`}
+                      >
+                        <div className="text-xs font-semibold text-gray-600">
+                          {r.label}
+                        </div>
+                        <div className="text-xs text-gray-500 mb-1">
+                          {r.rate.toFixed(r.rate % 1 === 0 ? 0 : 1)}%
+                        </div>
+                        <div
+                          className={`text-base sm:text-lg font-bold ${
+                            isActive ? "text-blue-700" : "text-gray-800"
+                          }`}
+                        >
+                          {formatCurrency(r.yearlyNet)}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {formatCurrency(r.hourlyBRL)}/h
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <p className="text-xs text-gray-500 mt-2">
+                  Líquido aproximado após impostos. Não considera INSS, contador
+                  ou despesas operacionais.
+                </p>
+              </div>
+            </div>
+
+            <div className="mb-6">
+              <h3 className="text-lg font-bold text-gray-800 mb-3">
+                💳 Forma de Recebimento
+              </h3>
+              <div className="flex flex-wrap gap-2 mb-2">
+                {PAYMENT_RAIL_KEYS.map((key) => {
+                  const rail = PAYMENT_RAILS[key];
+                  const active = paymentRail === key;
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => {
+                        setPaymentRail(key);
+                        trackEvent("change_payment_rail", {
+                          rail: key,
+                          fee: rail.feePercent,
+                        });
+                      }}
+                      className={`px-3 py-2 rounded-lg text-sm font-semibold border transition-all ${
+                        active
+                          ? "bg-blue-600 text-white border-blue-600"
+                          : "bg-white text-gray-700 border-gray-300 hover:border-blue-400"
+                      }`}
+                    >
+                      {rail.label}
+                      <span className="ml-1 opacity-75">
+                        ({rail.feePercent}%)
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-xs text-gray-600">
+                {PAYMENT_RAILS[paymentRail].hint}
+              </p>
+              {paymentFeePercent > 0 && (
+                <p className="text-xs text-blue-700 mt-1">
+                  Taxa horária ajustada para compensar a tarifa — você recebe
+                  o valor desejado depois do desconto da plataforma.
+                </p>
+              )}
+            </div>
+
+            <div className="mb-6">
+              <div className="flex justify-between items-baseline mb-2">
+                <h3 className="text-lg font-bold text-gray-800">
+                  📉 Buffer de Câmbio
+                </h3>
+                <span className="text-sm font-semibold text-gray-700">
+                  {currencyBuffer}% (cotação efetiva R${" "}
+                  {effectiveExchangeRate.toFixed(2)})
+                </span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="20"
+                step="1"
+                value={currencyBuffer}
+                onChange={(e) => {
+                  const value = Number(e.target.value);
+                  setCurrencyBuffer(value);
+                  trackEvent("adjust_currency_buffer", { value });
+                }}
+                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+              />
+              <p className="text-xs text-gray-600 mt-1">
+                Precifique como se o dólar estivesse {currencyBuffer}% mais fraco
+                — protege você de flutuações cambiais. 5–10% é razoável.
+              </p>
+            </div>
+
+            <div className="mb-6">
+              <div className="flex justify-between items-baseline mb-3">
+                <h3 className="text-lg font-bold text-gray-800">
+                  ⭐ Especialidades
+                </h3>
+                {specialtyPremiumPercent > 0 && (
+                  <span className="text-sm font-semibold text-green-700">
+                    +{specialtyPremiumPercent}% na taxa
+                  </span>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {SPECIALTY_KEYS.map((key) => {
+                  const s = SPECIALTIES[key];
+                  const active = specialties.includes(key);
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => {
+                        const next = active
+                          ? specialties.filter((k) => k !== key)
+                          : [...specialties, key];
+                        setSpecialties(next);
+                        trackEvent("toggle_specialty", {
+                          specialty: key,
+                          active: !active,
+                        });
+                      }}
+                      className={`px-3 py-2 rounded-full text-sm font-semibold border transition-all ${
+                        active
+                          ? "bg-green-600 text-white border-green-600"
+                          : "bg-white text-gray-700 border-gray-300 hover:border-green-400"
+                      }`}
+                    >
+                      <span className="mr-1">{s.icon}</span>
+                      {s.label}
+                      <span className="ml-1 opacity-75">+{s.premium}%</span>
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-xs text-gray-600 mt-2">
+                Marque as especialidades que justificam um prêmio sobre sua taxa.
+                Cap de +50% no total.
+              </p>
+            </div>
+
             <ClientLocationInput
               onLocationChange={handleLocationChange}
               onLocationAnalysis={handleLocationAnalysis}
@@ -858,6 +1148,50 @@ function App() {
                   </div>
                 </div>
               </div>
+            </div>
+
+            <div className="mb-6 bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-xl p-4">
+              <h3 className="text-base sm:text-lg font-bold mb-3 text-gray-800">
+                💭 E se eu cobrasse mais?
+              </h3>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {[0, 10, 20, 30].map((bump) => {
+                  const projectedYearlyGross =
+                    yearlyRevenue * (1 + bump / 100);
+                  const projectedYearlyNet =
+                    projectedYearlyGross * (1 - adjustedTaxPercent / 100);
+                  const baseline =
+                    yearlyRevenue * (1 - adjustedTaxPercent / 100);
+                  const delta = projectedYearlyNet - baseline;
+                  const isCurrent = bump === 0;
+                  return (
+                    <div
+                      key={bump}
+                      className={`p-3 rounded-lg ${
+                        isCurrent
+                          ? "bg-white border border-amber-400"
+                          : "bg-white/70 border border-amber-200"
+                      }`}
+                    >
+                      <div className="text-xs font-semibold text-gray-600">
+                        {isCurrent ? "Hoje" : `+${bump}%`}
+                      </div>
+                      <div className="text-base sm:text-lg font-bold text-gray-800">
+                        {formatCurrency(projectedYearlyNet)}
+                      </div>
+                      {!isCurrent && (
+                        <div className="text-xs text-green-700 font-semibold">
+                          +{formatCurrency(delta)}/ano
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              <p className="text-xs text-gray-600 mt-2">
+                Líquido anual estimado (após {adjustedTaxPercent.toFixed(1)}% de
+                impostos). Mesma carga de trabalho — só uma proposta diferente.
+              </p>
             </div>
 
             {/* Secondary Actions - Mobile Optimized */}

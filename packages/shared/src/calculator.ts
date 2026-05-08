@@ -19,6 +19,8 @@ export interface CalculatorInput {
   vacationDays: number;
   exchangeRate: number;
   clientLocation?: LocationData | null;
+  paymentFeePercent?: number;
+  specialtyPremiumPercent?: number;
 }
 
 export interface LocationAdjustment {
@@ -155,6 +157,8 @@ export const calculate = (input: CalculatorInput): CalculatorResult => {
     vacationDays,
     exchangeRate,
     clientLocation,
+    paymentFeePercent = 0,
+    specialtyPremiumPercent = 0,
   } = input;
 
   const costOfLivingIndex = stateData[state]?.costIndex ?? 100;
@@ -181,9 +185,17 @@ export const calculate = (input: CalculatorInput): CalculatorResult => {
   const baseRateWithAdjustedTax =
     grossMonthlyNeedsAdjusted / workingHoursPerMonth;
 
-  const finalBaseRate = locationAdjustment
+  const preFeeBaseRate = locationAdjustment
     ? locationAdjustment.adjustedRate * exchangeRate
     : baseRateWithAdjustedTax;
+
+  const paymentFeeMultiplier =
+    paymentFeePercent > 0 && paymentFeePercent < 100
+      ? 1 / (1 - paymentFeePercent / 100)
+      : 1;
+  const specialtyMultiplier = 1 + Math.max(0, specialtyPremiumPercent) / 100;
+  const finalBaseRate =
+    preFeeBaseRate * paymentFeeMultiplier * specialtyMultiplier;
 
   let potentialGains: PotentialGains | null = null;
   if (locationAdjustment) {
