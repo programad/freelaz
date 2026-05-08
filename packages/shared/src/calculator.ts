@@ -158,7 +158,9 @@ export const calculate = (input: CalculatorInput): CalculatorResult => {
   } = input;
 
   const costOfLivingIndex = stateData[state]?.costIndex ?? 100;
-  const adjustedExpenses = monthlyExpenses * (costOfLivingIndex / 100);
+  // monthlyExpenses is the user's actual cost of living — use as-is.
+  // costOfLivingIndex only informs the regional market-range comparison below.
+  const adjustedExpenses = monthlyExpenses;
   const savingsAmount = adjustedExpenses * (savingsPercent / 100);
   const extraAmount = adjustedExpenses * (extraPercent / 100);
   const netMonthlyNeeds = adjustedExpenses + savingsAmount + extraAmount;
@@ -216,8 +218,8 @@ export const calculate = (input: CalculatorInput): CalculatorResult => {
 
   const dailyRevenue = finalBaseRate * workHours;
   const weeklyRevenue = dailyRevenue * workDays;
-  const monthlyRevenue = weeklyRevenue * 4.33;
-  const yearlyRevenue = monthlyRevenue * 12;
+  const yearlyRevenue = finalBaseRate * workingHoursPerYear;
+  const monthlyRevenue = yearlyRevenue / 12;
 
   const marketRange = calculateMarketRates(
     profession,

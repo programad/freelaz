@@ -25,6 +25,7 @@ import {
   useLocalStorageConfig,
   type FreelazConfig,
 } from "./hooks/use-local-storage";
+import { readUrlConfig, useUrlConfigSync } from "./hooks/use-url-config";
 import { useToast } from "./hooks/use-toast";
 import { ToastContainer } from "./components/toast-container";
 import type { LocationData } from "@freelaz/shared";
@@ -44,18 +45,37 @@ function App() {
   const [locationAnalysis, setLocationAnalysis] =
     useState<LocationAnalysis | null>(null);
 
-  // Form data - matching the original exactly
-  const [profession, setProfession] = useState<ProfessionKey>("fullstack");
-  const [state, setState] = useState<StateKey>("sp");
-  const [experienceLevel, setExperienceLevel] =
-    useState<ExperienceLevel>("pleno");
-  const [monthlyExpenses, setMonthlyExpenses] = useState(2000);
-  const [savingsPercent, setSavingsPercent] = useState(20);
-  const [extraPercent, setExtraPercent] = useState(10);
-  const [taxPercent, setTaxPercent] = useState(15);
-  const [workHours, setWorkHours] = useState(8);
-  const [workDays, setWorkDays] = useState(5);
-  const [vacationDays, setVacationDays] = useState(30);
+  const urlSeed = readUrlConfig();
+  const [profession, setProfession] = useState<ProfessionKey>(
+    (urlSeed.profession as ProfessionKey | undefined) ?? "fullstack"
+  );
+  const [state, setState] = useState<StateKey>(
+    (urlSeed.state as StateKey | undefined) ?? "sp"
+  );
+  const [experienceLevel, setExperienceLevel] = useState<ExperienceLevel>(
+    (urlSeed.exp as ExperienceLevel | undefined) ?? "pleno"
+  );
+  const [monthlyExpenses, setMonthlyExpenses] = useState(
+    (urlSeed.expenses as number | undefined) ?? 2000
+  );
+  const [savingsPercent, setSavingsPercent] = useState(
+    (urlSeed.savings as number | undefined) ?? 20
+  );
+  const [extraPercent, setExtraPercent] = useState(
+    (urlSeed.extras as number | undefined) ?? 10
+  );
+  const [taxPercent, setTaxPercent] = useState(
+    (urlSeed.tax as number | undefined) ?? 15
+  );
+  const [workHours, setWorkHours] = useState(
+    (urlSeed.hours as number | undefined) ?? 8
+  );
+  const [workDays, setWorkDays] = useState(
+    (urlSeed.days as number | undefined) ?? 5
+  );
+  const [vacationDays, setVacationDays] = useState(
+    (urlSeed.vacation as number | undefined) ?? 30
+  );
 
   // Google Analytics
   const { trackEvent, isProduction } = useGoogleAnalytics();
@@ -121,14 +141,28 @@ function App() {
     onErrorCallback
   );
 
-  // Load saved configuration on app start - only once
   const hasLoadedConfig = useRef(false);
   useEffect(() => {
-    if (!hasLoadedConfig.current) {
-      loadConfig();
-      hasLoadedConfig.current = true;
-    }
-  }, []); // Empty dependency array to run only once
+    if (hasLoadedConfig.current) return;
+    hasLoadedConfig.current = true;
+    // URL params already seeded the initial state; only fall back to
+    // localStorage when there are no URL params at all.
+    const hasUrlParams = Object.keys(readUrlConfig()).length > 0;
+    if (!hasUrlParams) loadConfig();
+  }, []);
+
+  useUrlConfigSync({
+    profession,
+    state,
+    exp: experienceLevel,
+    expenses: monthlyExpenses,
+    savings: savingsPercent,
+    extras: extraPercent,
+    tax: taxPercent,
+    hours: workHours,
+    days: workDays,
+    vacation: vacationDays,
+  });
 
   useEffect(() => {
     trackEvent("page_load", {
@@ -899,12 +933,13 @@ function App() {
               </button>
               <button
                 onClick={() => {
+                  const shareUrl = window.location.href;
                   const text = `🇧🇷 Minha taxa como freelancer: ${formatCurrency(
                     rates.regular
                   )}/hora (${formatCurrency(
                     rates.regular / exchangeRate,
                     "USD"
-                  )}/hora)\n\nCalculado com Freelaz - freelaz.com`;
+                  )}/hora)\n\nCalcule a sua: ${shareUrl}`;
 
                   // Track share event
                   trackEvent("share_results", {
@@ -919,14 +954,14 @@ function App() {
                     (navigator as any).share({
                       title: "Minha Taxa de Freelancer",
                       text,
-                      url: window.location.href,
+                      url: shareUrl,
                     });
                   } else {
                     navigator.clipboard
                       .writeText(text)
                       .then(() =>
                         showSuccess(
-                          "Resultado copiado para a área de transferência!"
+                          "Link copiado! Quem abrir vê seus mesmos números."
                         )
                       )
                       .catch(() =>
@@ -1022,7 +1057,6 @@ function App() {
             trackEvent("close_calculation_breakdown");
           }}
           result={result}
-          monthlyExpenses={monthlyExpenses}
           taxPercent={taxPercent}
           savingsPercent={savingsPercent}
           extraPercent={extraPercent}

@@ -11,7 +11,6 @@ interface CalculationBreakdownModalProps {
   isOpen: boolean;
   onClose: () => void;
   result: CalculatorResult;
-  monthlyExpenses: number;
   taxPercent: number;
   savingsPercent: number;
   extraPercent: number;
@@ -25,7 +24,6 @@ export function CalculationBreakdownModal({
   isOpen,
   onClose,
   result,
-  monthlyExpenses,
   taxPercent,
   savingsPercent,
   extraPercent,
@@ -86,20 +84,15 @@ export function CalculationBreakdownModal({
               </h3>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span>Custo de vida informado:</span>
+                  <span>Custo de vida mensal:</span>
                   <span className="font-medium">
-                    {formatCurrency(monthlyExpenses)}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Índice de custo ({state}):</span>
-                  <span className="font-medium">{costOfLivingIndex}%</span>
-                </div>
-                <div className="flex justify-between border-t pt-2">
-                  <span className="font-semibold">Custo ajustado:</span>
-                  <span className="font-semibold">
                     {formatCurrency(adjustedExpenses)}
                   </span>
+                </div>
+                <div className="text-xs text-gray-500">
+                  Estado: {state.toUpperCase()} (índice regional{" "}
+                  {costOfLivingIndex}%, usado apenas para comparação com o
+                  mercado local)
                 </div>
               </div>
             </div>
