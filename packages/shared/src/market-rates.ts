@@ -1,5 +1,5 @@
-import type { ProfessionKey, ExperienceLevel } from "./profession-data";
-import type { LocationData } from "./data/location-data";
+import type { ProfessionKey, ExperienceLevel } from "./profession-data.js";
+import type { LocationData } from "./data/location-data.js";
 
 /**
  * Calculate realistic market rates for Brazilian freelancers

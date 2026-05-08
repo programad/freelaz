@@ -6,12 +6,13 @@ export const normalizeText = (text: string): string => {
     .replace(/[\u0300-\u036f]/g, "");
 };
 
-// Format currency helper
-export const formatCurrency = (amount: number, currency = "BRL"): string => {
-  const locale = currency === "BRL" ? "pt-BR" : "en-US";
-  return new Intl.NumberFormat(locale, {
+export const formatCurrency = (
+  amount: number,
+  currency: "BRL" | "USD" = "BRL"
+): string => {
+  return new Intl.NumberFormat("pt-BR", {
     style: "currency",
-    currency: currency,
+    currency,
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(amount);

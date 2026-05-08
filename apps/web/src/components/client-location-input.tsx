@@ -1,5 +1,10 @@
 import { useState, useEffect, useRef } from "react";
-import type { LocationData } from "@freelaz/shared";
+import {
+  countryNamePt,
+  categoryNamePt,
+  type LocationAdjustment,
+  type LocationData,
+} from "@freelaz/shared";
 import {
   LocationService,
   LocationServiceError,
@@ -23,83 +28,9 @@ export interface LocationAnalysis {
     competitiveness: string;
     recommendation: string;
   };
-  adjustment: {
-    adjustedRate: number;
-    multiplier: number;
-    reasoning: string;
-    comparison: {
-      localSeniorRate: number;
-      yourAdvantage: number;
-      competitivePosition: string;
-    };
-  };
+  adjustment: LocationAdjustment;
 }
 
-// Helper function to translate country names to Portuguese
-const getCountryNameInPortuguese = (country: string): string => {
-  switch (country) {
-    case "United States":
-      return "Estados Unidos";
-    case "United Kingdom":
-      return "Reino Unido";
-    case "Germany":
-      return "Alemanha";
-    case "France":
-      return "França";
-    case "Spain":
-      return "Espanha";
-    case "Netherlands":
-      return "Holanda";
-    case "Switzerland":
-      return "Suíça";
-    case "Sweden":
-      return "Suécia";
-    case "Finland":
-      return "Finlândia";
-    case "Poland":
-      return "Polônia";
-    case "Czech Republic":
-      return "República Tcheca";
-    case "Hungary":
-      return "Hungria";
-    case "Bulgaria":
-      return "Bulgária";
-    case "Romania":
-      return "Romênia";
-    case "Canada":
-      return "Canadá";
-    case "Australia":
-      return "Austrália";
-    case "Singapore":
-      return "Singapura";
-    case "Japan":
-      return "Japão";
-    case "Brazil":
-      return "Brasil";
-    case "Portugal":
-      return "Portugal";
-    case "Ireland":
-      return "Irlanda";
-    default:
-      return country;
-  }
-};
-
-// Helper function to translate category names to Portuguese
-const getCategoryNameInPortuguese = (category: string): string => {
-  switch (category) {
-    case "tech_hub":
-      return "hub tecnológico";
-    case "business_center":
-      return "centro empresarial";
-    case "capital":
-      return "capital";
-    case "major_city":
-      return "cidade importante";
-    default:
-      return category;
-  }
-};
 
 export function ClientLocationInput({
   onLocationChange,
@@ -174,39 +105,41 @@ export function ClientLocationInput({
     loadPopularCities();
   }, []);
 
-  // Search for cities as user types
   useEffect(() => {
-    const searchCities = async () => {
-      // Don't search if we already have a location selected
-      if (locationData) {
-        setSuggestions([]);
-        setShowSuggestions(false);
-        return;
-      }
+    if (locationData) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
 
-      if (searchQuery.length < 2) {
-        setSuggestions([]);
-        setShowSuggestions(false);
-        return;
-      }
+    if (searchQuery.length < 2) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
 
+    const controller = new AbortController();
+    const debounceTimer = setTimeout(async () => {
       try {
-        const result = await LocationService.searchCities({
-          query: searchQuery,
-          limit: 8,
-        });
-        console.log(`Search results for "${searchQuery}":`, result.data);
+        const result = await LocationService.searchCities(
+          { query: searchQuery, limit: 8 },
+          controller.signal
+        );
+        if (controller.signal.aborted) return;
         setSuggestions(result.data);
-        setShowSuggestions(true); // Ensure suggestions are shown when we have results
+        setShowSuggestions(true);
       } catch (error) {
+        if ((error as Error)?.name === "AbortError") return;
         console.error("Failed to search cities:", error);
         setSuggestions([]);
         setShowSuggestions(false);
       }
-    };
+    }, 300);
 
-    const debounceTimer = setTimeout(searchCities, 300);
-    return () => clearTimeout(debounceTimer);
+    return () => {
+      clearTimeout(debounceTimer);
+      controller.abort();
+    };
   }, [searchQuery, locationData]);
 
   // Handle click outside to close suggestions
@@ -286,7 +219,7 @@ export function ClientLocationInput({
   const handleSuggestionClick = (suggestion: LocationData) => {
     const displayName = `${
       suggestion.namePortuguese || suggestion.city
-    }, ${getCountryNameInPortuguese(suggestion.country)}`;
+    }, ${countryNamePt(suggestion.country)}`;
     setSearchQuery(displayName);
     setShowSuggestions(false);
     // Auto-submit when selecting from suggestions
@@ -299,7 +232,7 @@ export function ClientLocationInput({
   const handlePopularCityClick = (cityData: LocationData) => {
     const displayName = `${
       cityData.namePortuguese || cityData.city
-    }, ${getCountryNameInPortuguese(cityData.country)}`;
+    }, ${countryNamePt(cityData.country)}`;
     setSearchQuery(displayName);
     setShowSuggestions(false); // Hide suggestions immediately when clicking popular city
     // Auto-submit when selecting from popular cities
@@ -382,13 +315,13 @@ export function ClientLocationInput({
                         {suggestion.namePortuguese || suggestion.city}
                       </div>
                       <div className="text-sm text-gray-500">
-                        {getCountryNameInPortuguese(suggestion.country)}
+                        {countryNamePt(suggestion.country)}
                         {suggestion.state && `, ${suggestion.state}`}
                         {suggestion.region && ` • ${suggestion.region}`}
                       </div>
                     </div>
                     <div className="text-xs text-gray-400">
-                      {getCategoryNameInPortuguese(suggestion.category)}
+                      {categoryNamePt(suggestion.category)}
                     </div>
                   </button>
                 ))
@@ -433,7 +366,7 @@ export function ClientLocationInput({
                 className="px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-full transition-colors"
               >
                 {cityData.namePortuguese || cityData.city},{" "}
-                {getCountryNameInPortuguese(cityData.country)}
+                {countryNamePt(cityData.country)}
               </button>
             ))}
           </div>
@@ -447,7 +380,7 @@ export function ClientLocationInput({
             <div>
               <h4 className="text-lg font-semibold text-gray-900">
                 📍 {locationData.data.namePortuguese || locationData.data.city},{" "}
-                {getCountryNameInPortuguese(locationData.data.country)}
+                {countryNamePt(locationData.data.country)}
               </h4>
               {locationData.data.state && (
                 <p className="text-sm text-gray-600">

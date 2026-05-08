@@ -3,21 +3,19 @@ import {
   professionData,
   stateData,
   formatCurrency,
-  calculateMarketRates,
-  getCompetitivePosition,
+  calculate,
+  calculateLocationAdjustment,
   type ProfessionKey,
   type ExperienceLevel,
   type StateKey,
 } from "@freelaz/shared";
 import { ConfigurationModal } from "./components/configuration-modal";
-
 import { CalculationBreakdownModal } from "./components/calculation-breakdown-modal";
 import { ParametersInfoModal } from "./components/parameters-info-modal";
 import {
   ClientLocationInput,
   type LocationAnalysis,
 } from "./components/client-location-input";
-import { LocationService } from "./services/location-service";
 import {
   GoogleAnalytics,
   useGoogleAnalytics,
@@ -65,7 +63,7 @@ function App() {
   const isDevelopment = import.meta.env.DEV;
 
   // Toast notifications
-  const { toasts, showSuccess, showError, showInfo, removeToast } = useToast();
+  const { toasts, showSuccess, showError, removeToast } = useToast();
 
   // Current configuration object for localStorage hook
   const currentConfig = {
@@ -81,7 +79,6 @@ function App() {
     vacationDays,
   };
 
-  // LocalStorage configuration management callbacks - memoized to prevent recreation
   const onLoadCallback = useCallback(
     (config: FreelazConfig) => {
       if (config.profession) setProfession(config.profession as ProfessionKey);
@@ -105,7 +102,7 @@ function App() {
         experience_level: config.experienceLevel,
       });
     },
-    [] // Removed trackEvent dependency since it doesn't capture external state
+    [trackEvent]
   );
 
   const onErrorCallback = useCallback(
@@ -114,7 +111,7 @@ function App() {
         error: error.message,
       });
     },
-    [] // Removed trackEvent dependency since it doesn't capture external state
+    [trackEvent]
   );
 
   // LocalStorage configuration management
@@ -133,7 +130,6 @@ function App() {
     }
   }, []); // Empty dependency array to run only once
 
-  // Track page load (after configuration is loaded)
   useEffect(() => {
     trackEvent("page_load", {
       initial_profession: profession,
@@ -142,136 +138,103 @@ function App() {
       initial_expenses: monthlyExpenses,
       has_saved_config: hasConfig(),
     });
-  }, [profession, state, experienceLevel, monthlyExpenses]);
+    // Fire once per mount; deliberately not reactive to input changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  // Load exchange rate (matching original)
   useEffect(() => {
-    const fetchExchangeRate = async () => {
+    const apiBase = import.meta.env.VITE_API_URL as string | undefined;
+
+    const fromApi = async (): Promise<{
+      rate: number;
+      source: string;
+    } | null> => {
+      if (!apiBase) return null;
       try {
-        trackEvent("exchange_rate_fetch_start");
+        const response = await fetch(`${apiBase}/api/exchange-rate`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = (await response.json()) as {
+          rate: number;
+          source: string;
+        };
+        if (!Number.isFinite(data.rate)) return null;
+        if (data.source === "fallback") return null;
+        return data;
+      } catch {
+        return null;
+      }
+    };
+
+    const fromAwesomeApi = async (): Promise<{
+      rate: number;
+      source: string;
+    } | null> => {
+      try {
         const response = await fetch(
           "https://economia.awesomeapi.com.br/last/USD-BRL"
         );
-        const data = await response.json();
-        if (data.USDBRL) {
-          const newRate = parseFloat(data.USDBRL.bid);
-          setExchangeRate(newRate);
-          setLastUpdated("Atualizado: agora");
-          trackEvent("exchange_rate_fetch_success", {
-            exchange_rate: newRate,
-          });
-        }
-      } catch (error) {
-        console.log("Failed to load exchange rate");
-        trackEvent("exchange_rate_fetch_error", {
-          error: error instanceof Error ? error.message : "Unknown error",
+        if (!response.ok) return null;
+        const data = (await response.json()) as {
+          USDBRL?: { bid?: string };
+        };
+        const rate = data.USDBRL?.bid ? parseFloat(data.USDBRL.bid) : NaN;
+        if (!Number.isFinite(rate)) return null;
+        return { rate, source: "awesomeapi-direct" };
+      } catch {
+        return null;
+      }
+    };
+
+    const fetchExchangeRate = async () => {
+      trackEvent("exchange_rate_fetch_start");
+      const result = (await fromApi()) ?? (await fromAwesomeApi());
+      if (result) {
+        setExchangeRate(result.rate);
+        setLastUpdated("Atualizado: agora");
+        trackEvent("exchange_rate_fetch_success", {
+          exchange_rate: result.rate,
+          source: result.source,
         });
+      } else {
+        trackEvent("exchange_rate_fetch_error", { error: "all_sources_failed" });
       }
     };
     fetchExchangeRate();
-  }, []);
+  }, [trackEvent]);
 
-  // Calculations (matching original exactly)
-  const costOfLivingIndex = stateData[state]?.costIndex || 100;
-  const adjustedExpenses = monthlyExpenses * (costOfLivingIndex / 100);
-  const savingsAmount = adjustedExpenses * (savingsPercent / 100);
-  const extraAmount = adjustedExpenses * (extraPercent / 100);
-  const netMonthlyNeeds = adjustedExpenses + savingsAmount + extraAmount;
-  const grossMonthlyNeeds = netMonthlyNeeds / (1 - taxPercent / 100);
-  const workingDaysPerYear = 52 * workDays - vacationDays;
-  const workingHoursPerYear = workingDaysPerYear * workHours;
-  const workingHoursPerMonth = workingHoursPerYear / 12;
-  const baseRate = grossMonthlyNeeds / workingHoursPerMonth;
+  const result = calculate({
+    profession,
+    experienceLevel,
+    state,
+    monthlyExpenses,
+    savingsPercent,
+    extraPercent,
+    taxPercent,
+    workHours,
+    workDays,
+    vacationDays,
+    exchangeRate,
+    clientLocation,
+  });
 
-  // Location-adjusted rates with enhanced calculation
-  const locationAdjustment = clientLocation
-    ? LocationService.calculateLocationAdjustment(
-        baseRate,
-        clientLocation,
-        state
-      )
-    : null;
+  const {
+    adjustedExpenses,
+    savingsAmount,
+    extraAmount,
+    workingHoursPerMonth,
+    baseRate,
+    finalBaseRate,
+    adjustedTaxPercent,
+    rates,
+    marketRange,
+    position,
+    potentialGains,
+    dailyRevenue,
+    weeklyRevenue,
+    monthlyRevenue,
+    yearlyRevenue,
+  } = result;
 
-  // Enhanced tax calculation for international work
-  const getAdjustedTaxRate = () => {
-    if (!clientLocation) return taxPercent;
-
-    // International clients may require different tax treatment
-    if (clientLocation.country !== "Brazil") {
-      // For international clients, consider:
-      // - Potential for MEI (6% to 11.2%) vs regular taxation
-      // - Export of services benefits
-      // - Different tax brackets
-      return Math.max(taxPercent * 0.7, 6); // Minimum 6% for MEI, up to 30% reduction
-    }
-
-    // For Brazilian clients in different states, keep current tax rate
-    return taxPercent;
-  };
-
-  const adjustedTaxPercent = getAdjustedTaxRate();
-
-  // Recalculate with adjusted tax rate
-  const grossMonthlyNeedsAdjusted =
-    netMonthlyNeeds / (1 - adjustedTaxPercent / 100);
-  const baseRateWithAdjustedTax =
-    grossMonthlyNeedsAdjusted / workingHoursPerMonth;
-
-  // Final rate calculation with location adjustment
-  let finalBaseRate = baseRateWithAdjustedTax;
-
-  if (locationAdjustment) {
-    // Apply location adjustment to the tax-adjusted rate
-    finalBaseRate = locationAdjustment.adjustedRate * exchangeRate;
-  }
-
-  // Calculate potential gains/losses with proper tax consideration
-  const calculatePotentialGains = () => {
-    if (!locationAdjustment) return null;
-
-    // Calculate revenue with base rate (no location adjustment)
-    const baseMonthlyRevenue = baseRateWithAdjustedTax * workingHoursPerMonth;
-
-    // Calculate revenue with location-adjusted rate
-    const adjustedMonthlyRevenue = finalBaseRate * workingHoursPerMonth;
-
-    // Calculate taxes on both scenarios
-    const baseTaxes = baseMonthlyRevenue * (adjustedTaxPercent / 100);
-    const adjustedTaxes = adjustedMonthlyRevenue * (adjustedTaxPercent / 100);
-
-    // Net revenue after taxes
-    const baseNetRevenue = baseMonthlyRevenue - baseTaxes;
-    const adjustedNetRevenue = adjustedMonthlyRevenue - adjustedTaxes;
-
-    const monthlyDifference = adjustedNetRevenue - baseNetRevenue;
-    const yearlyDifference = monthlyDifference * 12;
-    const percentageChange =
-      ((adjustedNetRevenue - baseNetRevenue) / baseNetRevenue) * 100;
-
-    return {
-      monthlyDifference,
-      yearlyDifference,
-      percentageChange,
-      isGain: monthlyDifference > 0,
-      taxSavings:
-        clientLocation?.country !== "Brazil"
-          ? taxPercent - adjustedTaxPercent
-          : 0,
-      baseNetRevenue,
-      adjustedNetRevenue,
-    };
-  };
-
-  const potentialGains = calculatePotentialGains();
-
-  const rates = {
-    regular: finalBaseRate * 1.0,
-    revision: finalBaseRate * 1.25,
-    rush: finalBaseRate * 1.5,
-    difficult: finalBaseRate * 2.0,
-  };
-
-  // Handle client location changes
   const handleLocationChange = useCallback(
     (location: LocationData | null) => {
       setClientLocation(location);
@@ -290,21 +253,12 @@ function App() {
   const handleLocationAnalysis = useCallback(
     (analysis: LocationAnalysis | null) => {
       if (analysis) {
-        // Use the location data from the analysis instead of clientLocation state
-        // to avoid React state timing issues
-        const adjustment = LocationService.calculateLocationAdjustment(
+        const adjustment = calculateLocationAdjustment(
           baseRate,
-          analysis.location, // Use analysis.location instead of clientLocation
-          state
+          analysis.location,
+          exchangeRate
         );
-
-        const updatedAnalysis = {
-          ...analysis,
-          adjustment,
-        };
-
-        setLocationAnalysis(updatedAnalysis);
-
+        setLocationAnalysis({ ...analysis, adjustment });
         trackEvent("location_analysis_completed", {
           city: analysis.location.city,
           country: analysis.location.country,
@@ -316,43 +270,8 @@ function App() {
         setLocationAnalysis(null);
       }
     },
-    [baseRate, state, trackEvent] // Remove clientLocation from dependencies
+    [baseRate, exchangeRate, trackEvent]
   );
-
-  // Revenue projections (using location-adjusted rate if available)
-  const effectiveRate = finalBaseRate;
-  const dailyRevenue = effectiveRate * workHours;
-  const weeklyRevenue = dailyRevenue * workDays;
-  const monthlyRevenue = weeklyRevenue * 4.33;
-  const yearlyRevenue = monthlyRevenue * 12;
-
-  // Market comparison using new realistic rates
-  const marketRange = calculateMarketRates(
-    profession,
-    experienceLevel,
-    costOfLivingIndex
-  );
-  const avgRate = (marketRange.min + marketRange.max) / 2;
-
-  // Get competitive position (prioritize client location if available)
-  const competitiveAnalysis = getCompetitivePosition(
-    finalBaseRate / 5.5, // Convert BRL to USD for comparison
-    clientLocation,
-    experienceLevel
-  );
-
-  let position = competitiveAnalysis.position;
-
-  // Fallback to Brazilian market comparison if no client location
-  if (!clientLocation) {
-    if (baseRate < marketRange.min * 0.8) {
-      position = "Abaixo do mercado";
-    } else if (baseRate > marketRange.max * 1.2) {
-      position = "Acima do mercado";
-    } else if (baseRate > avgRate) {
-      position = "Acima da média";
-    }
-  }
 
   return (
     <div className="min-h-screen bg-gray-900 p-3 sm:p-6">
@@ -367,18 +286,12 @@ function App() {
       )}
 
       <div className="max-w-6xl mx-auto">
-        {/* Header */}
         <header className="text-center mb-6 text-white">
           <h1 className="text-2xl md:text-4xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">
-            🇧🇷{" "}
-            <span className="hidden sm:inline">Calculadora de Preços para</span>{" "}
-            Freelaz<span className="hidden sm:inline"> Brasileiros</span>
+            🇧🇷 Calculadora de Preço para Freelancer Brasileiro
           </h1>
           <p className="text-sm md:text-lg text-gray-300 font-light mb-4 md:mb-6">
-            <span className="sm:hidden">Calculadora de Preços</span>
-            <span className="hidden sm:inline">
-              Brazilian Freelancer Rate Calculator
-            </span>
+            Brazilian Freelancer Rate Calculator — Freelaz
           </p>
         </header>
 
@@ -733,8 +646,8 @@ function App() {
                 </button>
                 <div className="text-xs sm:text-sm text-gray-600">
                   <span className="hidden sm:inline">
-                    📊 Mercado: R$ {Math.round(marketRange.min * 5.5)}-
-                    {Math.round(marketRange.max * 5.5)}/h •{" "}
+                    📊 Mercado: R$ {Math.round(marketRange.min * exchangeRate)}-
+                    {Math.round(marketRange.max * exchangeRate)}/h •{" "}
                   </span>
                   <span className="font-semibold text-blue-600">
                     {position}
@@ -959,7 +872,7 @@ function App() {
             </div>
 
             {/* Primary Action Buttons */}
-            <div className="grid grid-cols-3 gap-2 sm:gap-4">
+            <div className="grid grid-cols-2 gap-2 sm:gap-4">
               <button
                 onClick={() => {
                   const success = saveConfig(currentConfig);
@@ -1026,20 +939,6 @@ function App() {
                 <span className="text-lg sm:text-base">🔗</span>
                 <span className="hidden sm:inline">Compartilhar</span>
                 <span className="sm:hidden text-xs">Comp.</span>
-              </button>
-              <button
-                onClick={() => {
-                  trackEvent("click_pdf_export", {
-                    hourly_rate_brl: Math.round(rates.regular),
-                    hourly_rate_usd: Math.round(rates.regular / exchangeRate),
-                    monthly_expenses: monthlyExpenses,
-                  });
-                  showInfo("Funcionalidade de PDF em desenvolvimento");
-                }}
-                className="bg-green-600 text-white px-3 sm:px-4 py-3 rounded-lg font-semibold hover:shadow-lg transition-all transform hover:scale-105 text-sm sm:text-base flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2"
-              >
-                <span className="text-lg sm:text-base">📄</span>
-                <span className="text-xs sm:text-base">PDF</span>
               </button>
             </div>
           </div>
@@ -1116,37 +1015,21 @@ function App() {
           currentState={state}
         />
 
-        {/* Calculation Breakdown Modal */}
         <CalculationBreakdownModal
           isOpen={showCalculationBreakdown}
           onClose={() => {
             setShowCalculationBreakdown(false);
             trackEvent("close_calculation_breakdown");
           }}
+          result={result}
           monthlyExpenses={monthlyExpenses}
-          costOfLivingIndex={costOfLivingIndex}
-          adjustedExpenses={adjustedExpenses}
-          savingsPercent={savingsPercent}
-          savingsAmount={savingsAmount}
-          extraPercent={extraPercent}
-          extraAmount={extraAmount}
-          netMonthlyNeeds={netMonthlyNeeds}
           taxPercent={taxPercent}
-          adjustedTaxPercent={adjustedTaxPercent}
-          grossMonthlyNeeds={grossMonthlyNeeds}
-          grossMonthlyNeedsAdjusted={grossMonthlyNeedsAdjusted}
-          workingDaysPerYear={workingDaysPerYear}
-          workingHoursPerYear={workingHoursPerYear}
-          workingHoursPerMonth={workingHoursPerMonth}
-          baseRate={baseRate}
-          baseRateWithAdjustedTax={baseRateWithAdjustedTax}
-          finalBaseRate={finalBaseRate}
-          rates={rates}
-          clientLocation={clientLocation}
-          locationAnalysis={locationAnalysis}
-          potentialGains={potentialGains}
+          savingsPercent={savingsPercent}
+          extraPercent={extraPercent}
           exchangeRate={exchangeRate}
           state={state}
+          clientLocation={clientLocation}
+          locationAnalysis={locationAnalysis}
         />
       </div>
 

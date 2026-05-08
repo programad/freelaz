@@ -6,20 +6,22 @@
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#1f2937" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="Freelaz - Calculadora de preços para freelancers brasileiros que trabalham com clientes americanos"
+      content="Calculadora de preço para freelancer brasileiro: descubra quanto cobrar por hora considerando custo de vida, impostos e a localização do cliente internacional."
     />
 
     <!-- OpenGraph Meta Tags -->
     <meta
       property="og:title"
-      content="🇧🇷 Freelaz - Calculadora de Preços para Freelancers"
+      content="Freelaz — Calculadora de Preço para Freelancer Brasileiro"
     />
     <meta
       property="og:description"
-      content="Calculadora de preços para freelancers brasileiros que trabalham com clientes americanos. Calcule suas tarifas de forma inteligente e competitiva."
+      content="Calcule sua taxa horária de freelancer com base em custo de vida, impostos e localização do cliente. Ferramenta gratuita para profissionais brasileiros."
     />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://freelaz.com" />
@@ -27,6 +29,10 @@
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image:type" content="image/jpeg" />
+    <meta
+      property="og:image:alt"
+      content="Calculadora Freelaz mostrando taxa horária em reais e dólares para freelancers brasileiros"
+    />
     <meta property="og:site_name" content="Freelaz" />
     <meta property="og:locale" content="pt_BR" />
 
@@ -34,28 +40,92 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta
       name="twitter:title"
-      content="🇧🇷 Freelaz - Calculadora de Preços para Freelancers"
+      content="Freelaz — Calculadora de Preço para Freelancer Brasileiro"
     />
     <meta
       name="twitter:description"
-      content="Calculadora de preços para freelancers brasileiros que trabalham com clientes americanos. Calcule suas tarifas de forma inteligente e competitiva."
+      content="Calcule sua taxa horária com base em custo de vida, impostos e localização do cliente. Ferramenta gratuita."
     />
     <meta name="twitter:image" content="https://freelaz.com/og-image.jpg" />
     <meta
       name="twitter:image:alt"
-      content="Freelaz - Calculadora de Preços para Freelancers"
+      content="Calculadora Freelaz mostrando taxa horária em reais e dólares"
     />
 
     <!-- Additional SEO Meta Tags -->
     <meta name="robots" content="index, follow" />
-    <meta name="author" content="Freelaz Team" />
+    <meta name="author" content="Freelaz" />
     <meta
       name="keywords"
-      content="freelancer, brasil, calculadora, preços, tarifas, dólar, real, conversão, trabalho remoto"
+      content="calculadora freelancer, quanto cobrar freelancer, taxa horária freelancer brasil, freelancer dolar, preço hora desenvolvedor, mei freelancer, freelancer cliente internacional"
     />
     <link rel="canonical" href="https://freelaz.com" />
 
-    <title>🇧🇷 Freelaz - Calculadora de Preços para Freelancers</title>
+    <title>Freelaz — Calculadora de Preço para Freelancer Brasileiro</title>
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Freelaz",
+        "alternateName": "Calculadora de Preço para Freelancer Brasileiro",
+        "url": "https://freelaz.com",
+        "description": "Calculadora inteligente de taxa horária para freelancers brasileiros que trabalham com clientes internacionais.",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Any",
+        "inLanguage": "pt-BR",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "BRL"
+        },
+        "audience": {
+          "@type": "Audience",
+          "audienceType": "Freelancers brasileiros"
+        }
+      }
+    </script>
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Como calcular minha taxa horária como freelancer no Brasil?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Calcule somando seu custo de vida mensal, reserva de emergência, gastos extras e impostos, depois divida pelas horas de trabalho mensais. A Freelaz faz isso automaticamente, ajustando pela sua região e pela localização do cliente."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Quanto cobrar de cliente americano sendo freelancer brasileiro?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Para clientes americanos, considere o poder de compra local, a taxa praticada por desenvolvedores nos EUA e benefícios fiscais como exportação de serviços (MEI a partir de 6%). A Freelaz calcula a faixa competitiva por cidade do cliente."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Como considerar impostos ao precificar como freelancer?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Some o percentual de impostos ao seu custo total e ajuste sua taxa bruta para que o líquido cubra suas necessidades. MEI permite alíquotas reduzidas em exportação de serviços, em geral entre 6% e 11,2%."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Vale a pena cobrar em dólar como freelancer brasileiro?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Sim — a diferença cambial somada à exportação de serviços costuma resultar em ganho líquido significativamente maior do que clientes nacionais, mesmo aplicando descontos competitivos."
+            }
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

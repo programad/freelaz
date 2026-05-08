@@ -1,80 +1,61 @@
-import { formatCurrency } from "../services/location-service";
+import {
+  countryNamePt,
+  formatCurrency,
+  type CalculatorResult,
+  type LocationData,
+} from "@freelaz/shared";
 import { useBodyScrollLock } from "../hooks/use-body-scroll-lock";
-import type { LocationData } from "@freelaz/shared";
 import type { LocationAnalysis } from "./client-location-input";
 
 interface CalculationBreakdownModalProps {
   isOpen: boolean;
   onClose: () => void;
+  result: CalculatorResult;
   monthlyExpenses: number;
-  costOfLivingIndex: number;
-  adjustedExpenses: number;
-  savingsPercent: number;
-  savingsAmount: number;
-  extraPercent: number;
-  extraAmount: number;
-  netMonthlyNeeds: number;
   taxPercent: number;
-  adjustedTaxPercent: number;
-  grossMonthlyNeeds: number;
-  grossMonthlyNeedsAdjusted: number;
-  workingDaysPerYear: number;
-  workingHoursPerYear: number;
-  workingHoursPerMonth: number;
-  baseRate: number;
-  baseRateWithAdjustedTax: number;
-  finalBaseRate: number;
-  rates: {
-    regular: number;
-    revision: number;
-    rush: number;
-    difficult: number;
-  };
-  clientLocation: LocationData | null;
-  locationAnalysis: LocationAnalysis | null;
-  potentialGains: {
-    monthlyDifference: number;
-    yearlyDifference: number;
-    percentageChange: number;
-    isGain: boolean;
-    taxSavings: number;
-  } | null;
+  savingsPercent: number;
+  extraPercent: number;
   exchangeRate: number;
   state: string;
+  clientLocation: LocationData | null;
+  locationAnalysis: LocationAnalysis | null;
 }
 
 export function CalculationBreakdownModal({
   isOpen,
   onClose,
+  result,
   monthlyExpenses,
-  costOfLivingIndex,
-  adjustedExpenses,
-  savingsPercent,
-  savingsAmount,
-  extraPercent,
-  extraAmount,
-  netMonthlyNeeds,
   taxPercent,
-  adjustedTaxPercent,
-  grossMonthlyNeeds,
-  grossMonthlyNeedsAdjusted,
-  workingDaysPerYear,
-  workingHoursPerYear,
-  workingHoursPerMonth,
-  baseRate,
-  baseRateWithAdjustedTax,
-  finalBaseRate,
-  rates,
-  clientLocation,
-  locationAnalysis,
-  potentialGains,
+  savingsPercent,
+  extraPercent,
   exchangeRate,
   state,
+  clientLocation,
+  locationAnalysis,
 }: CalculationBreakdownModalProps) {
-  // Lock body scroll when modal is open
   useBodyScrollLock(isOpen);
 
   if (!isOpen) return null;
+
+  const {
+    costOfLivingIndex,
+    adjustedExpenses,
+    savingsAmount,
+    extraAmount,
+    netMonthlyNeeds,
+    grossMonthlyNeeds,
+    grossMonthlyNeedsAdjusted,
+    workingDaysPerYear,
+    workingHoursPerYear,
+    workingHoursPerMonth,
+    baseRate,
+    baseRateWithAdjustedTax,
+    finalBaseRate,
+    adjustedTaxPercent,
+    rates,
+    potentialGains,
+  } = result;
 
   return (
     <div
@@ -99,7 +80,6 @@ export function CalculationBreakdownModal({
 
         <div className="overflow-y-auto max-h-[calc(90vh-140px)] p-4 sm:p-6">
           <div className="space-y-6">
-            {/* Step 1: Base Expenses */}
             <div className="bg-gray-50 p-4 rounded-lg">
               <h3 className="font-semibold text-gray-800 mb-3 flex items-center">
                 1️⃣ Custos Base
@@ -124,7 +104,6 @@ export function CalculationBreakdownModal({
               </div>
             </div>
 
-            {/* Step 2: Additional Costs */}
             <div className="bg-blue-50 p-4 rounded-lg">
               <h3 className="font-semibold text-gray-800 mb-3 flex items-center">
                 2️⃣ Custos Adicionais
@@ -153,7 +132,6 @@ export function CalculationBreakdownModal({
               </div>
             </div>
 
-            {/* Step 3: Tax Calculation */}
             <div className="bg-purple-50 p-4 rounded-lg">
               <h3 className="font-semibold text-gray-800 mb-3 flex items-center">
                 3️⃣ Cálculo de Impostos
@@ -208,7 +186,6 @@ export function CalculationBreakdownModal({
               </div>
             </div>
 
-            {/* Step 4: Working Hours */}
             <div className="bg-green-50 p-4 rounded-lg">
               <h3 className="font-semibold text-gray-800 mb-3 flex items-center">
                 4️⃣ Horas de Trabalho
@@ -233,7 +210,6 @@ export function CalculationBreakdownModal({
               </div>
             </div>
 
-            {/* Step 5: Rate Calculation */}
             <div className="bg-yellow-50 p-4 rounded-lg">
               <h3 className="font-semibold text-gray-800 mb-3 flex items-center">
                 5️⃣ Cálculo da Taxa
@@ -278,7 +254,6 @@ export function CalculationBreakdownModal({
               </div>
             </div>
 
-            {/* Step 6: Location Impact (if applicable) */}
             {clientLocation && potentialGains && (
               <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-lg border border-green-200">
                 <h3 className="font-semibold text-gray-800 mb-3 flex items-center">
@@ -289,49 +264,7 @@ export function CalculationBreakdownModal({
                     <div className="font-medium text-gray-800 mb-2">
                       📍 Cliente:{" "}
                       {clientLocation.namePortuguese || clientLocation.city},{" "}
-                      {clientLocation.country === "United States"
-                        ? "Estados Unidos"
-                        : clientLocation.country === "United Kingdom"
-                        ? "Reino Unido"
-                        : clientLocation.country === "Germany"
-                        ? "Alemanha"
-                        : clientLocation.country === "France"
-                        ? "França"
-                        : clientLocation.country === "Spain"
-                        ? "Espanha"
-                        : clientLocation.country === "Netherlands"
-                        ? "Holanda"
-                        : clientLocation.country === "Switzerland"
-                        ? "Suíça"
-                        : clientLocation.country === "Sweden"
-                        ? "Suécia"
-                        : clientLocation.country === "Finland"
-                        ? "Finlândia"
-                        : clientLocation.country === "Poland"
-                        ? "Polônia"
-                        : clientLocation.country === "Czech Republic"
-                        ? "República Tcheca"
-                        : clientLocation.country === "Hungary"
-                        ? "Hungria"
-                        : clientLocation.country === "Bulgaria"
-                        ? "Bulgária"
-                        : clientLocation.country === "Romania"
-                        ? "Romênia"
-                        : clientLocation.country === "Canada"
-                        ? "Canadá"
-                        : clientLocation.country === "Australia"
-                        ? "Austrália"
-                        : clientLocation.country === "Singapore"
-                        ? "Singapura"
-                        : clientLocation.country === "Japan"
-                        ? "Japão"
-                        : clientLocation.country === "Brazil"
-                        ? "Brasil"
-                        : clientLocation.country === "Portugal"
-                        ? "Portugal"
-                        : clientLocation.country === "Ireland"
-                        ? "Irlanda"
-                        : clientLocation.country}
+                      {countryNamePt(clientLocation.country)}
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
@@ -409,7 +342,6 @@ export function CalculationBreakdownModal({
               </div>
             )}
 
-            {/* Final Rates */}
             <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-200">
               <h3 className="font-semibold text-gray-800 mb-3 flex items-center">
                 🎯 Taxas Finais

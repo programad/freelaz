@@ -7,6 +7,10 @@ import {
   getCitiesByCategory,
   getCitiesByCountry,
   getLocationStats,
+  getCostLevel,
+  getSalaryLevel,
+  getCompetitiveness,
+  getRecommendation,
   type LocationData,
 } from "@freelaz/shared";
 
@@ -16,13 +20,10 @@ type Bindings = {
 
 const app = new Hono<{ Bindings: Bindings }>();
 
-// Rate limiting storage (in production, use KV or external storage)
-const rateLimitMap = new Map<string, number[]>();
+const CACHE_TTL = 24 * 60 * 60;
+const RATE_LIMIT_WINDOW_SECONDS = 60;
+const RATE_LIMIT_MAX_REQUESTS = 30;
 
-// Cache TTL - 24 hours
-const CACHE_TTL = 24 * 60 * 60; // 24 hours in seconds
-
-// CORS protection - only allow our frontend domains
 app.use(
   "/api/location/*",
   cors({
@@ -38,45 +39,36 @@ app.use(
   })
 );
 
-// Rate limiting middleware - 30 requests per minute per IP
 app.use("/api/location/*", async (c, next) => {
+  const kv = c.env.LOCATION_CACHE;
+  if (!kv) {
+    await next();
+    return;
+  }
+
   const clientIP =
     c.req.header("CF-Connecting-IP") ||
     c.req.header("X-Forwarded-For") ||
     "unknown";
-  const now = Date.now();
-  const windowMs = 60 * 1000; // 1 minute
-  const maxRequests = 30; // 30 requests per minute
 
-  const requests = rateLimitMap.get(clientIP) || [];
-  const recentRequests = requests.filter((time) => now - time < windowMs);
+  const key = `ratelimit:${clientIP}`;
+  const raw = await kv.get(key);
+  const count = raw ? parseInt(raw, 10) : 0;
 
-  if (recentRequests.length >= maxRequests) {
+  if (count >= RATE_LIMIT_MAX_REQUESTS) {
     return c.json(
       {
         error: "Rate limit exceeded",
         message: "Too many requests. Please try again later.",
-        retryAfter: Math.ceil(windowMs / 1000),
+        retryAfter: RATE_LIMIT_WINDOW_SECONDS,
       },
       429
     );
   }
 
-  recentRequests.push(now);
-  rateLimitMap.set(clientIP, recentRequests);
-
-  // Clean up old entries periodically
-  if (Math.random() < 0.01) {
-    // 1% chance
-    for (const [ip, times] of rateLimitMap.entries()) {
-      const validTimes = times.filter((time) => now - time < windowMs);
-      if (validTimes.length === 0) {
-        rateLimitMap.delete(ip);
-      } else {
-        rateLimitMap.set(ip, validTimes);
-      }
-    }
-  }
+  await kv.put(key, String(count + 1), {
+    expirationTtl: RATE_LIMIT_WINDOW_SECONDS,
+  });
 
   await next();
 });
@@ -369,42 +361,5 @@ app.get("/api/location/stats", async (c) => {
     );
   }
 });
-
-// Helper functions
-function getCostLevel(cost: number): string {
-  if (cost < 1000) return "Muito Baixo";
-  if (cost < 2000) return "Baixo";
-  if (cost < 3000) return "Médio";
-  if (cost < 4000) return "Alto";
-  return "Muito Alto";
-}
-
-function getSalaryLevel(salary: number): string {
-  if (salary < 2000) return "Baixo";
-  if (salary < 4000) return "Médio";
-  if (salary < 6000) return "Alto";
-  return "Muito Alto";
-}
-
-function getCompetitiveness(seniorRate: number): string {
-  if (seniorRate < 30) return "Muito Competitivo";
-  if (seniorRate < 60) return "Competitivo";
-  if (seniorRate < 100) return "Moderado";
-  return "Mercado Premium";
-}
-
-function getRecommendation(location: LocationData): string {
-  const ratio = location.averageNetSalary / location.costOfLiving;
-
-  if (ratio > 2.5) {
-    return "Excelente custo-benefício - salários altos em relação ao custo de vida";
-  } else if (ratio > 2.0) {
-    return "Bom custo-benefício - relação salário/custo decente";
-  } else if (ratio > 1.5) {
-    return "Custo-benefício razoável - relação salário/custo moderada";
-  } else {
-    return "Mercado premium - custos altos mas potencialmente muitas oportunidades";
-  }
-}
 
 export default app;
