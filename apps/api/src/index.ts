@@ -6,6 +6,8 @@ import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
 import { professionData, stateData } from "@freelaz/shared";
 import locationRoutes from "./routes/location";
+import submissionsRoutes from "./routes/submissions";
+import emailRoutes from "./routes/email";
 
 type Bindings = {
   DB: D1Database;
@@ -133,7 +135,8 @@ app.post(
   }
 );
 
-// Mount location routes
 app.route("/", locationRoutes);
+app.route("/", submissionsRoutes);
+app.route("/", emailRoutes);
 
 export default app;

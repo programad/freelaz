@@ -20,3 +20,37 @@
   border: none;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
+
+@media print {
+  body {
+    background: white !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+  /* Force the main panel to render with simple styling */
+  .min-h-screen {
+    min-height: auto !important;
+    padding: 0 !important;
+    background: white !important;
+  }
+  header h1,
+  header p {
+    color: black !important;
+    background: none !important;
+    -webkit-text-fill-color: black !important;
+  }
+  button {
+    display: none !important;
+  }
+  input[type="range"] {
+    display: none !important;
+  }
+}
+
+.print-only {
+  display: none;
+}

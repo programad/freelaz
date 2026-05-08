@@ -23,6 +23,7 @@ import {
 import { ConfigurationModal } from "./components/configuration-modal";
 import { CalculationBreakdownModal } from "./components/calculation-breakdown-modal";
 import { ParametersInfoModal } from "./components/parameters-info-modal";
+import { SubmissionModal } from "./components/submission-modal";
 import {
   ClientLocationInput,
   type LocationAnalysis,
@@ -32,6 +33,7 @@ import {
   useGoogleAnalytics,
 } from "./components/google-analytics";
 import { Footer } from "./components/footer";
+import { EmailSignup } from "./components/email-signup";
 import {
   useLocalStorageConfig,
   type FreelazConfig,
@@ -46,6 +48,7 @@ function App() {
   const [showParameters, setShowParameters] = useState(false);
   const [showCalculationBreakdown, setShowCalculationBreakdown] =
     useState(false);
+  const [showSubmission, setShowSubmission] = useState(false);
   const [exchangeRate, setExchangeRate] = useState(5.57);
   const [lastUpdated, setLastUpdated] = useState("Taxa padrão");
 
@@ -1237,10 +1240,22 @@ function App() {
                 📊 <span className="sm:hidden">Dados</span>
                 <span className="hidden sm:inline">Parâmetros</span>
               </button>
+              <button
+                onClick={() => {
+                  setShowSubmission(true);
+                  trackEvent("open_submission_modal");
+                }}
+                className="text-xs sm:text-sm px-3 py-2 bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 border border-purple-200 rounded-lg hover:from-purple-200 hover:to-pink-200 transition-colors flex items-center gap-1 font-medium"
+              >
+                🤝 <span className="sm:hidden">Compartilhar</span>
+                <span className="hidden sm:inline">
+                  Compartilhar minha taxa
+                </span>
+              </button>
             </div>
 
             {/* Primary Action Buttons */}
-            <div className="grid grid-cols-2 gap-2 sm:gap-4">
+            <div className="grid grid-cols-3 gap-2 sm:gap-4 no-print">
               <button
                 onClick={() => {
                   const success = saveConfig(currentConfig);
@@ -1308,6 +1323,19 @@ function App() {
                 <span className="text-lg sm:text-base">🔗</span>
                 <span className="hidden sm:inline">Compartilhar</span>
                 <span className="sm:hidden text-xs">Comp.</span>
+              </button>
+              <button
+                onClick={() => {
+                  trackEvent("click_pdf_export", {
+                    hourly_rate_brl: Math.round(rates.regular),
+                  });
+                  window.print();
+                }}
+                className="bg-green-600 text-white px-3 sm:px-4 py-3 rounded-lg font-semibold hover:shadow-lg transition-all transform hover:scale-105 text-sm sm:text-base flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2"
+              >
+                <span className="text-lg sm:text-base">📄</span>
+                <span className="hidden sm:inline">Imprimir / PDF</span>
+                <span className="sm:hidden text-xs">PDF</span>
               </button>
             </div>
           </div>
@@ -1399,9 +1427,46 @@ function App() {
           clientLocation={clientLocation}
           locationAnalysis={locationAnalysis}
         />
+
+        <SubmissionModal
+          isOpen={showSubmission}
+          onClose={() => setShowSubmission(false)}
+          defaults={{
+            profession,
+            experienceLevel,
+            state,
+            hourlyRateBRL: rates.regular,
+            hourlyRateUSD: rates.regular / exchangeRate,
+            taxRegime,
+            clientCountry: clientLocation?.country,
+          }}
+          onSuccess={() => {
+            showSuccess(
+              "Obrigado! Sua taxa foi adicionada anonimamente."
+            );
+            trackEvent("submit_rate_success");
+          }}
+          onError={(msg) => {
+            showError(msg);
+            trackEvent("submit_rate_error", { message: msg });
+          }}
+        />
       </div>
 
-      {/* Footer */}
+      <div className="max-w-6xl mx-auto px-4 mt-8 no-print">
+        <EmailSignup
+          source="calculator-footer"
+          onSuccess={(already) =>
+            showSuccess(
+              already
+                ? "Você já está cadastrado — obrigado!"
+                : "Cadastrado! Aguarde o próximo relatório mensal."
+            )
+          }
+          onError={(msg) => showError(msg)}
+        />
+      </div>
+
       <Footer />
 
       {/* Toast Container */}
