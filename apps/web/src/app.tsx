@@ -304,7 +304,10 @@ function App() {
   }, [trackEvent]);
 
   const paymentFeePercent = PAYMENT_RAILS[paymentRail].feePercent;
-  const effectiveExchangeRate = exchangeRate * (1 - currencyBuffer / 100);
+  // Buffer is a UX nudge: shows USD as if dollar were that much weaker so
+  // the freelancer quotes more to protect against FX drops. BRL math uses
+  // the real exchangeRate; only USD-side display divides by this.
+  const usdDisplayRate = exchangeRate * (1 - currencyBuffer / 100);
   const specialtyPremiumPercent = sumSpecialtyPremium(specialties);
   const segmentAdjustmentPercent = segmentPremium(industry, clientType);
 
@@ -319,7 +322,7 @@ function App() {
     workHours,
     workDays,
     vacationDays,
-    exchangeRate: effectiveExchangeRate,
+    exchangeRate,
     clientLocation,
     paymentFeePercent,
     specialtyPremiumPercent,
@@ -344,48 +347,25 @@ function App() {
     yearlyRevenue,
   } = result;
 
+  // Compare regimes at a fixed hourly rate (what the user is currently
+  // charging) so the variation in net take-home is visible — picking MEI vs
+  // PF should clearly show the freelancer keeps more, not the same number.
   const regimeComparison = useMemo(() => {
     return TAX_REGIME_KEYS.filter((key) => key !== "custom").map((key) => {
       const regime = TAX_REGIMES[key];
-      const rate = regime.rate ?? taxPercent;
-      const r = calculate({
-        profession,
-        experienceLevel,
-        state,
-        monthlyExpenses,
-        savingsPercent,
-        extraPercent,
-        taxPercent: rate,
-        workHours,
-        workDays,
-        vacationDays,
-        exchangeRate,
-        clientLocation,
-      });
-      const yearlyNet = r.yearlyRevenue * (1 - r.adjustedTaxPercent / 100);
+      const regimeRate = regime.rate ?? taxPercent;
+      const yearlyGross = result.yearlyRevenue;
+      const yearlyNet = yearlyGross * (1 - regimeRate / 100);
       return {
         key,
         label: regime.label,
-        rate: r.adjustedTaxPercent,
-        hourlyBRL: r.rates.regular,
+        rate: regimeRate,
+        hourlyBRL: result.rates.regular,
         monthlyNet: yearlyNet / 12,
         yearlyNet,
       };
     });
-  }, [
-    profession,
-    experienceLevel,
-    state,
-    monthlyExpenses,
-    savingsPercent,
-    extraPercent,
-    taxPercent,
-    workHours,
-    workDays,
-    vacationDays,
-    exchangeRate,
-    clientLocation,
-  ]);
+  }, [result, taxPercent]);
 
   const handleLocationChange = useCallback(
     (location: LocationData | null) => {
@@ -562,7 +542,7 @@ function App() {
                   🔄 Resetar
                 </button>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Reserva (%)
@@ -613,39 +593,15 @@ function App() {
                     </span>
                   </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Impostos (%)
-                  </label>
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="range"
-                      min="0"
-                      max="40"
-                      step="0.1"
-                      value={taxPercent}
-                      onChange={(e) => {
-                        const newValue = Number(e.target.value);
-                        trackEvent("adjust_tax_percent", {
-                          old_value: taxPercent,
-                          new_value: newValue,
-                        });
-                        setTaxPercent(newValue);
-                        setTaxRegime(detectRegimeFromRate(newValue) ?? "custom");
-                      }}
-                      className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-                    />
-                    <span className="bg-blue-100 text-blue-600 px-3 py-1 rounded font-semibold text-sm min-w-14 text-center">
-                      {taxPercent.toFixed(taxPercent % 1 === 0 ? 0 : 1)}%
-                    </span>
-                  </div>
-                </div>
               </div>
             </div>
 
             <div className="mb-6">
               <h3 className="text-lg font-bold text-gray-800 mb-3">
-                🧾 Regime Tributário
+                🧾 Regime Tributário{" "}
+                <span className="text-sm font-normal text-gray-500">
+                  (define os impostos)
+                </span>
               </h3>
               <div className="flex flex-wrap gap-2 mb-2">
                 {TAX_REGIME_KEYS.map((key) => {
@@ -674,10 +630,40 @@ function App() {
               <p className="text-xs text-gray-600 mb-3">
                 {TAX_REGIMES[taxRegime].hint}
               </p>
+              {taxRegime === "custom" && (
+                <div className="mb-3 flex items-center gap-3">
+                  <label className="text-sm font-semibold text-gray-700 whitespace-nowrap">
+                    Imposto:
+                  </label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="40"
+                    step="0.1"
+                    value={taxPercent}
+                    onChange={(e) => {
+                      const newValue = Number(e.target.value);
+                      trackEvent("adjust_tax_percent", {
+                        old_value: taxPercent,
+                        new_value: newValue,
+                      });
+                      setTaxPercent(newValue);
+                    }}
+                    className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                  />
+                  <span className="bg-blue-100 text-blue-600 px-3 py-1 rounded font-semibold text-sm min-w-14 text-center">
+                    {taxPercent.toFixed(taxPercent % 1 === 0 ? 0 : 1)}%
+                  </span>
+                </div>
+              )}
 
               <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-xl p-4">
-                <div className="text-sm font-semibold text-gray-800 mb-3">
-                  📊 Comparação de regimes (anual líquido)
+                <div className="text-sm font-semibold text-gray-800 mb-1">
+                  📊 Quanto você leva pra casa em cada regime
+                </div>
+                <div className="text-xs text-gray-600 mb-3">
+                  Cobrando os mesmos {formatCurrency(rates.regular)}/h, varia
+                  só o imposto.
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {regimeComparison.map((r) => {
@@ -695,17 +681,18 @@ function App() {
                           {r.label}
                         </div>
                         <div className="text-xs text-gray-500 mb-1">
-                          {r.rate.toFixed(r.rate % 1 === 0 ? 0 : 1)}%
+                          {r.rate.toFixed(r.rate % 1 === 0 ? 0 : 1)}% imposto
                         </div>
                         <div
                           className={`text-base sm:text-lg font-bold ${
                             isActive ? "text-blue-700" : "text-gray-800"
                           }`}
                         >
-                          {formatCurrency(r.yearlyNet)}
+                          {formatCurrency(r.monthlyNet)}
                         </div>
-                        <div className="text-xs text-gray-500">
-                          {formatCurrency(r.hourlyBRL)}/h
+                        <div className="text-xs text-gray-500">por mês</div>
+                        <div className="text-xs text-gray-400 mt-1">
+                          {formatCurrency(r.yearlyNet)}/ano
                         </div>
                       </div>
                     );
@@ -767,8 +754,8 @@ function App() {
                   📉 Buffer de Câmbio
                 </h3>
                 <span className="text-sm font-semibold text-gray-700">
-                  {currencyBuffer}% (cotação efetiva R${" "}
-                  {effectiveExchangeRate.toFixed(2)})
+                  {currencyBuffer}% · cota como se USD = R${" "}
+                  {usdDisplayRate.toFixed(2)}
                 </span>
               </div>
               <input
@@ -785,8 +772,9 @@ function App() {
                 className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
               />
               <p className="text-xs text-gray-600 mt-1">
-                Precifique como se o dólar estivesse {currencyBuffer}% mais fraco
-                — protege você de flutuações cambiais. 5–10% é razoável.
+                Aumenta seu valor em USD para proteger contra queda do dólar.
+                A cotação real ({exchangeRate.toFixed(2)}) é usada para os
+                números em R$. 5–10% é razoável.
               </p>
             </div>
 
@@ -934,7 +922,7 @@ function App() {
                       {formatCurrency(baseRate)}/h
                     </div>
                     <div className="text-xs text-blue-600">
-                      {formatCurrency(baseRate / exchangeRate, "USD")}/h
+                      {formatCurrency(baseRate / usdDisplayRate, "USD")}/h
                     </div>
                   </div>
                   <div className="bg-white p-3 rounded-lg border">
@@ -945,7 +933,7 @@ function App() {
                       {formatCurrency(finalBaseRate)}/h
                     </div>
                     <div className="text-xs text-green-700 font-semibold">
-                      {formatCurrency(finalBaseRate / exchangeRate, "USD")}/h
+                      {formatCurrency(finalBaseRate / usdDisplayRate, "USD")}/h
                     </div>
                   </div>
                   <div className="bg-white p-3 rounded-lg border">
@@ -1120,7 +1108,7 @@ function App() {
                     {formatCurrency(rates.regular)}/h
                   </div>
                   <div className="text-xs sm:text-sm text-gray-600">
-                    {formatCurrency(rates.regular / exchangeRate, "USD")}/h
+                    {formatCurrency(rates.regular / usdDisplayRate, "USD")}/h
                   </div>
                 </div>
                 <div
@@ -1139,7 +1127,7 @@ function App() {
                     {formatCurrency(rates.revision)}/h
                   </div>
                   <div className="text-xs sm:text-sm text-gray-600">
-                    {formatCurrency(rates.revision / exchangeRate, "USD")}/h
+                    {formatCurrency(rates.revision / usdDisplayRate, "USD")}/h
                   </div>
                 </div>
                 <div
@@ -1158,7 +1146,7 @@ function App() {
                     {formatCurrency(rates.rush)}/h
                   </div>
                   <div className="text-xs sm:text-sm text-gray-600">
-                    {formatCurrency(rates.rush / exchangeRate, "USD")}/h
+                    {formatCurrency(rates.rush / usdDisplayRate, "USD")}/h
                   </div>
                 </div>
                 <div
@@ -1177,7 +1165,7 @@ function App() {
                     {formatCurrency(rates.difficult)}/h
                   </div>
                   <div className="text-xs sm:text-sm text-gray-600">
-                    {formatCurrency(rates.difficult / exchangeRate, "USD")}/h
+                    {formatCurrency(rates.difficult / usdDisplayRate, "USD")}/h
                   </div>
                 </div>
               </div>
@@ -1196,22 +1184,22 @@ function App() {
                     {
                       label: "Por Dia",
                       brl: dailyRevenue,
-                      usd: dailyRevenue / exchangeRate,
+                      usd: dailyRevenue / usdDisplayRate,
                     },
                     {
                       label: "Por Semana",
                       brl: weeklyRevenue,
-                      usd: weeklyRevenue / exchangeRate,
+                      usd: weeklyRevenue / usdDisplayRate,
                     },
                     {
                       label: "Por Mês",
                       brl: monthlyRevenue,
-                      usd: monthlyRevenue / exchangeRate,
+                      usd: monthlyRevenue / usdDisplayRate,
                     },
                     {
                       label: "Por Ano",
                       brl: yearlyRevenue,
-                      usd: yearlyRevenue / exchangeRate,
+                      usd: yearlyRevenue / usdDisplayRate,
                     },
                   ].map((item, index) => (
                     <div
@@ -1287,7 +1275,9 @@ function App() {
                     projectedYearlyGross * (1 - adjustedTaxPercent / 100);
                   const baseline =
                     yearlyRevenue * (1 - adjustedTaxPercent / 100);
-                  const delta = projectedYearlyNet - baseline;
+                  const yearlyDelta = projectedYearlyNet - baseline;
+                  const monthlyNet = projectedYearlyNet / 12;
+                  const monthlyDelta = yearlyDelta / 12;
                   const isCurrent = bump === 0;
                   return (
                     <div
@@ -1302,20 +1292,24 @@ function App() {
                         {isCurrent ? "Hoje" : `+${bump}%`}
                       </div>
                       <div className="text-base sm:text-lg font-bold text-gray-800">
-                        {formatCurrency(projectedYearlyNet)}
+                        {formatCurrency(monthlyNet)}
                       </div>
+                      <div className="text-xs text-gray-500">por mês</div>
                       {!isCurrent && (
-                        <div className="text-xs text-green-700 font-semibold">
-                          +{formatCurrency(delta)}/ano
+                        <div className="text-xs text-green-700 font-semibold mt-1">
+                          +{formatCurrency(monthlyDelta)}/mês
                         </div>
                       )}
+                      <div className="text-xs text-gray-400 mt-1">
+                        {formatCurrency(projectedYearlyNet)}/ano
+                      </div>
                     </div>
                   );
                 })}
               </div>
               <p className="text-xs text-gray-600 mt-2">
-                Líquido anual estimado (após {adjustedTaxPercent.toFixed(1)}% de
-                impostos). Mesma carga de trabalho — só uma proposta diferente.
+                Líquido estimado após {adjustedTaxPercent.toFixed(1)}% de
+                impostos. Mesma carga de trabalho — só uma proposta diferente.
               </p>
             </div>
 

@@ -1,11 +1,34 @@
 import {
   COST_LEVEL,
   COMPETITIVENESS,
+  findLocationData,
+  searchCities as searchCitiesLocal,
+  getCitiesByCategory as getCitiesByCategoryLocal,
+  getCitiesByCountry as getCitiesByCountryLocal,
+  getAllCities as getAllCitiesLocal,
+  getCostLevel,
+  getSalaryLevel,
+  getCompetitiveness,
+  getRecommendation,
   type CostLevel,
   type Competitiveness,
   type LocationData,
 } from "@freelaz/shared";
 export { formatCurrency } from "@freelaz/shared";
+
+const buildInsights = (data: LocationData) => ({
+  costLevel: getCostLevel(data.costOfLiving),
+  salaryLevel: getSalaryLevel(data.averageNetSalary),
+  competitiveness: getCompetitiveness(data.localDeveloperRates.senior),
+  recommendation: getRecommendation(data),
+});
+
+const normalize = (s: string) =>
+  s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .trim();
 
 export interface LocationSearchResult {
   success: boolean;
@@ -45,9 +68,6 @@ export class LocationService {
   private static readonly API_BASE =
     (import.meta.env?.VITE_API_URL as string) || "http://localhost:8787";
 
-  /**
-   * Get specific location data for a city and country
-   */
   static async getLocationData(
     city: string,
     country: string
@@ -59,30 +79,33 @@ export class LocationService {
         )}/${encodeURIComponent(city)}`,
         {
           method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
         }
       );
-
-      if (!response.ok) {
+      if (response.ok) return await response.json();
+      if (response.status === 404) {
         const errorData: LocationError = await response.json();
         throw new LocationServiceError(
           errorData.message,
-          response.status,
+          404,
           errorData
         );
       }
-
-      return await response.json();
+      throw new Error(`HTTP ${response.status}`);
     } catch (error) {
-      if (error instanceof LocationServiceError) {
-        throw error;
+      if (error instanceof LocationServiceError) throw error;
+      // API unreachable — fall back to local data
+      const local = findLocationData(normalize(city), normalize(country));
+      if (local) {
+        return {
+          success: true,
+          data: local,
+          insights: buildInsights(local),
+        };
       }
-      console.error("Failed to fetch location data:", error);
       throw new LocationServiceError(
-        "Failed to connect to location service",
-        500
+        `City not found: ${city}, ${country}`,
+        404
       );
     }
   }
@@ -97,29 +120,40 @@ export class LocationService {
     signal?: AbortSignal
   ): Promise<LocationSearchResult> {
     const searchParams = new URLSearchParams();
-
     if (params.query) searchParams.set("q", params.query);
     if (params.category) searchParams.set("category", params.category);
     if (params.country) searchParams.set("country", params.country);
     if (params.limit) searchParams.set("limit", params.limit.toString());
 
-    const response = await fetch(
-      `${this.API_BASE}/api/location/search?${searchParams.toString()}`,
-      {
-        method: "GET",
-        headers: { "Content-Type": "application/json" },
-        signal,
-      }
-    );
-
-    if (!response.ok) {
-      throw new LocationServiceError(
-        `HTTP ${response.status}: ${response.statusText}`,
-        response.status
+    try {
+      const response = await fetch(
+        `${this.API_BASE}/api/location/search?${searchParams.toString()}`,
+        {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+          signal,
+        }
       );
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      return await response.json();
+    } catch (error) {
+      if ((error as Error)?.name === "AbortError") throw error;
+      // API unreachable — search local data
+      const limit = Math.min(params.limit ?? 10, 50);
+      let results: LocationData[] = [];
+      if (params.query) results = searchCitiesLocal(params.query);
+      else if (params.category)
+        results = getCitiesByCategoryLocal(params.category);
+      else if (params.country)
+        results = getCitiesByCountryLocal(params.country);
+      results = results.slice(0, limit);
+      return {
+        success: true,
+        data: results,
+        total: results.length,
+        query: { ...params, limit },
+      };
     }
-
-    return await response.json();
   }
 
   /**
@@ -131,43 +165,40 @@ export class LocationService {
       limit?: number;
       category?: "tech_hub" | "business_center" | "capital" | "major_city";
     } = {}
-  ): Promise<{
-    success: boolean;
-    data: LocationData[];
-    pagination: {
-      page: number;
-      limit: number;
-      total: number;
-      totalPages: number;
-      hasNext: boolean;
-      hasPrev: boolean;
-    };
-  }> {
+  ) {
+    const page = params.page ?? 1;
+    const limit = params.limit ?? 20;
     try {
       const searchParams = new URLSearchParams();
-
-      if (params.page) searchParams.set("page", params.page.toString());
-      if (params.limit) searchParams.set("limit", params.limit.toString());
+      if (params.page) searchParams.set("page", String(page));
+      if (params.limit) searchParams.set("limit", String(limit));
       if (params.category) searchParams.set("category", params.category);
-
       const response = await fetch(
         `${this.API_BASE}/api/location/cities?${searchParams.toString()}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
+        { method: "GET", headers: { "Content-Type": "application/json" } }
       );
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
       return await response.json();
-    } catch (error) {
-      console.error("Failed to fetch cities:", error);
-      throw new LocationServiceError("Failed to fetch cities", 500);
+    } catch {
+      const all = params.category
+        ? getCitiesByCategoryLocal(params.category)
+        : getAllCitiesLocal();
+      all.sort((a, b) => a.costOfLiving - b.costOfLiving);
+      const total = all.length;
+      const start = (page - 1) * limit;
+      const end = start + limit;
+      return {
+        success: true,
+        data: all.slice(start, end),
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+          hasNext: end < total,
+          hasPrev: page > 1,
+        },
+      };
     }
   }
 
