@@ -597,41 +597,69 @@ function App() {
             </div>
 
             <div className="mb-6">
-              <h3 className="text-lg font-bold text-gray-800 mb-3">
-                🧾 Regime Tributário{" "}
-                <span className="text-sm font-normal text-gray-500">
-                  (define os impostos)
-                </span>
+              <h3 className="text-lg font-bold text-gray-800 mb-2">
+                🧾 Regime Tributário
               </h3>
-              <div className="flex flex-wrap gap-2 mb-2">
+              <p className="text-xs text-gray-600 mb-3">
+                Toque para escolher. Cobrando{" "}
+                <strong>{formatCurrency(rates.regular)}/h</strong>, isto é o
+                que você leva pra casa em cada regime.
+              </p>
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
                 {TAX_REGIME_KEYS.map((key) => {
                   const regime = TAX_REGIMES[key];
-                  const active = taxRegime === key;
+                  const isActive = taxRegime === key;
+                  const compare = regimeComparison.find((r) => r.key === key);
                   return (
                     <button
                       key={key}
                       onClick={() => handleRegimeChange(key)}
-                      className={`px-3 py-2 rounded-lg text-sm font-semibold border transition-all ${
-                        active
-                          ? "bg-blue-600 text-white border-blue-600"
-                          : "bg-white text-gray-700 border-gray-300 hover:border-blue-400"
+                      className={`p-3 rounded-xl border text-left transition-all ${
+                        isActive
+                          ? "bg-blue-50 border-blue-500 shadow-md ring-2 ring-blue-200"
+                          : "bg-white border-gray-200 hover:border-blue-300"
                       }`}
                     >
-                      {regime.label}
-                      {regime.rate !== null && (
-                        <span className="ml-1 opacity-75">
-                          ({regime.rate}%)
-                        </span>
+                      <div
+                        className={`text-sm font-bold ${
+                          isActive ? "text-blue-700" : "text-gray-800"
+                        }`}
+                      >
+                        {regime.label}
+                      </div>
+                      <div className="text-xs text-gray-500 mb-2">
+                        {regime.rate !== null
+                          ? `${regime.rate}% imposto`
+                          : "imposto livre"}
+                      </div>
+                      {compare ? (
+                        <>
+                          <div
+                            className={`text-base font-bold ${
+                              isActive ? "text-blue-700" : "text-gray-900"
+                            }`}
+                          >
+                            {formatCurrency(compare.monthlyNet)}
+                          </div>
+                          <div className="text-xs text-gray-500">por mês</div>
+                          <div className="text-xs text-gray-400 mt-0.5">
+                            {formatCurrency(compare.yearlyNet)}/ano
+                          </div>
+                        </>
+                      ) : (
+                        <div className="text-xs text-gray-500 italic">
+                          ajuste o slider abaixo
+                        </div>
                       )}
                     </button>
                   );
                 })}
               </div>
-              <p className="text-xs text-gray-600 mb-3">
+              <p className="text-xs text-gray-600 mt-3">
                 {TAX_REGIMES[taxRegime].hint}
               </p>
               {taxRegime === "custom" && (
-                <div className="mb-3 flex items-center gap-3">
+                <div className="mt-3 flex items-center gap-3">
                   <label className="text-sm font-semibold text-gray-700 whitespace-nowrap">
                     Imposto:
                   </label>
@@ -656,53 +684,10 @@ function App() {
                   </span>
                 </div>
               )}
-
-              <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-xl p-4">
-                <div className="text-sm font-semibold text-gray-800 mb-1">
-                  📊 Quanto você leva pra casa em cada regime
-                </div>
-                <div className="text-xs text-gray-600 mb-3">
-                  Cobrando os mesmos {formatCurrency(rates.regular)}/h, varia
-                  só o imposto.
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  {regimeComparison.map((r) => {
-                    const isActive = r.key === taxRegime;
-                    return (
-                      <div
-                        key={r.key}
-                        className={`p-3 rounded-lg border ${
-                          isActive
-                            ? "bg-white border-blue-500 shadow-sm"
-                            : "bg-white/70 border-gray-200"
-                        }`}
-                      >
-                        <div className="text-xs font-semibold text-gray-600">
-                          {r.label}
-                        </div>
-                        <div className="text-xs text-gray-500 mb-1">
-                          {r.rate.toFixed(r.rate % 1 === 0 ? 0 : 1)}% imposto
-                        </div>
-                        <div
-                          className={`text-base sm:text-lg font-bold ${
-                            isActive ? "text-blue-700" : "text-gray-800"
-                          }`}
-                        >
-                          {formatCurrency(r.monthlyNet)}
-                        </div>
-                        <div className="text-xs text-gray-500">por mês</div>
-                        <div className="text-xs text-gray-400 mt-1">
-                          {formatCurrency(r.yearlyNet)}/ano
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-                <p className="text-xs text-gray-500 mt-2">
-                  Líquido aproximado após impostos. Não considera INSS, contador
-                  ou despesas operacionais.
-                </p>
-              </div>
+              <p className="text-xs text-gray-400 mt-2">
+                Líquido aproximado após impostos. Não considera INSS, contador
+                ou despesas operacionais.
+              </p>
             </div>
 
             <div className="mb-6">
