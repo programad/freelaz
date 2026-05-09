@@ -3,24 +3,17 @@ import {
   formatCurrency,
   calculate,
   calculateLocationAdjustment,
-  TAX_REGIMES,
   TAX_REGIME_KEYS,
-  detectRegimeFromRate,
+  TAX_REGIMES,
   getRegimeRate,
   PAYMENT_RAILS,
   getCityOffset,
   computeOverlap,
-  SPECIALTIES,
-  sumSpecialtyPremium,
-  segmentPremium,
   type ProfessionKey,
   type ExperienceLevel,
   type StateKey,
   type TaxRegimeKey,
   type PaymentRailKey,
-  type SpecialtyKey,
-  type IndustryKey,
-  type ClientTypeKey,
   type LocationData,
 } from "@freelaz/shared";
 import { CalculationBreakdownModal } from "./components/calculation-breakdown-modal";
@@ -48,7 +41,6 @@ import { StickyResult } from "./sections/sticky-result";
 import { ProfilePhase } from "./sections/profile-phase";
 import { NeedsPhase } from "./sections/needs-phase";
 import { PricingPhase } from "./sections/pricing-phase";
-import { AdvancedSection } from "./sections/advanced-section";
 import { InsightsSection } from "./sections/insights-section";
 import { ActionsBar } from "./sections/actions-bar";
 
@@ -85,35 +77,15 @@ function App() {
   const [extraPercent, setExtraPercent] = useState(
     (urlSeed.extras as number | undefined) ?? 10
   );
-  const [taxPercent, setTaxPercent] = useState(
-    (urlSeed.tax as number | undefined) ?? TAX_REGIMES.simples.rate ?? 15
-  );
-  const [taxRegime, setTaxRegime] = useState<TaxRegimeKey>(
-    (urlSeed.regime as TaxRegimeKey | undefined) ??
-      (detectRegimeFromRate(
-        (urlSeed.tax as number | undefined) ?? TAX_REGIMES.simples.rate ?? 15
-      ) ??
-        "simples")
-  );
+  const seedRegime = urlSeed.regime as string | undefined;
+  const initialRegime: TaxRegimeKey = TAX_REGIME_KEYS.includes(
+    seedRegime as TaxRegimeKey
+  )
+    ? (seedRegime as TaxRegimeKey)
+    : "simples";
+  const [taxRegime, setTaxRegime] = useState<TaxRegimeKey>(initialRegime);
   const [paymentRail, setPaymentRail] = useState<PaymentRailKey>(
     (urlSeed.rail as PaymentRailKey | undefined) ?? "wise"
-  );
-  const [currencyBuffer, setCurrencyBuffer] = useState<number>(
-    (urlSeed.buffer as number | undefined) ?? 0
-  );
-  const [specialties, setSpecialties] = useState<SpecialtyKey[]>(() => {
-    const raw = urlSeed.specialties as string | undefined;
-    if (!raw) return [];
-    return raw
-      .split(",")
-      .map((s) => s.trim() as SpecialtyKey)
-      .filter((s) => s in SPECIALTIES);
-  });
-  const [industry, setIndustry] = useState<IndustryKey>(
-    (urlSeed.industry as IndustryKey | undefined) ?? "none"
-  );
-  const [clientType, setClientType] = useState<ClientTypeKey>(
-    (urlSeed.clientType as ClientTypeKey | undefined) ?? "none"
   );
   const [workHours, setWorkHours] = useState(
     (urlSeed.hours as number | undefined) ?? 8
@@ -133,7 +105,6 @@ function App() {
   // Toast notifications
   const { toasts, showSuccess, showError, removeToast } = useToast();
 
-  // Current configuration object for localStorage hook
   const currentConfig = {
     profession,
     state,
@@ -141,7 +112,7 @@ function App() {
     monthlyExpenses,
     savingsPercent,
     extraPercent,
-    taxPercent,
+    taxRegime,
     workHours,
     workDays,
     vacationDays,
@@ -158,7 +129,11 @@ function App() {
         setSavingsPercent(config.savingsPercent);
       if (config.extraPercent !== undefined)
         setExtraPercent(config.extraPercent);
-      if (config.taxPercent !== undefined) setTaxPercent(config.taxPercent);
+      if (
+        config.taxRegime &&
+        TAX_REGIME_KEYS.includes(config.taxRegime as TaxRegimeKey)
+      )
+        setTaxRegime(config.taxRegime as TaxRegimeKey);
       if (config.workHours) setWorkHours(config.workHours);
       if (config.workDays) setWorkDays(config.workDays);
       if (config.vacationDays) setVacationDays(config.vacationDays);
@@ -206,26 +181,20 @@ function App() {
     expenses: monthlyExpenses,
     savings: savingsPercent,
     extras: extraPercent,
-    tax: taxPercent,
     hours: workHours,
     days: workDays,
     vacation: vacationDays,
     regime: taxRegime,
     rail: paymentRail,
-    buffer: currencyBuffer,
-    specialties: specialties.join(","),
-    industry,
-    clientType,
   });
 
   const handleRegimeChange = useCallback(
     (regime: TaxRegimeKey) => {
       setTaxRegime(regime);
-      // Store the domestic rate as the slider value — the calculator
-      // applies the export discount based on regime + client.
-      const domesticRate = TAX_REGIMES[regime].rate;
-      if (domesticRate !== null) setTaxPercent(domesticRate);
-      trackEvent("change_tax_regime", { regime, rate: domesticRate });
+      trackEvent("change_tax_regime", {
+        regime,
+        rate: TAX_REGIMES[regime].rate,
+      });
     },
     [trackEvent]
   );
@@ -302,16 +271,9 @@ function App() {
   }, [trackEvent]);
 
   const paymentFeePercent = PAYMENT_RAILS[paymentRail].feePercent;
-  const usdDisplayRate = exchangeRate * (1 - currencyBuffer / 100);
-  const specialtyPremiumPercent = sumSpecialtyPremium(specialties);
-  const segmentAdjustmentPercent = segmentPremium(industry, clientType);
-
-  // International clients trigger export tax benefits (ISS+PIS+COFINS exempt
-  // for Simples; PIS+COFINS exempt for Lucro Presumido). The effective tax
-  // depends on the chosen regime, not a flat discount.
   const isExport = !!clientLocation && clientLocation.country !== "Brazil";
-  const regimeRate = getRegimeRate(taxRegime, isExport);
-  const effectiveTaxPercent = regimeRate ?? taxPercent;
+  const effectiveTaxPercent = getRegimeRate(taxRegime, isExport) ?? 0;
+  const domesticTaxPercent = getRegimeRate(taxRegime, false) ?? 0;
 
   const result = calculate({
     profession,
@@ -327,8 +289,6 @@ function App() {
     exchangeRate,
     clientLocation,
     paymentFeePercent,
-    specialtyPremiumPercent,
-    segmentAdjustmentPercent,
   });
 
   const {
@@ -350,9 +310,9 @@ function App() {
   // export rate if the client is international (since ISS+PIS+COFINS
   // are exempt) — Simples drops from ~12% to ~4.5%, Presumido to ~9%.
   const regimeComparison = useMemo(() => {
-    return TAX_REGIME_KEYS.filter((key) => key !== "custom").map((key) => {
+    return TAX_REGIME_KEYS.map((key) => {
       const regime = TAX_REGIMES[key];
-      const rateForClient = getRegimeRate(key, isExport) ?? taxPercent;
+      const rateForClient = getRegimeRate(key, isExport) ?? 0;
       const yearlyGross = result.yearlyRevenue;
       const yearlyNet = yearlyGross * (1 - rateForClient / 100);
       return {
@@ -364,7 +324,7 @@ function App() {
         yearlyNet,
       };
     });
-  }, [result, taxPercent, isExport]);
+  }, [result, isExport]);
 
   const handleLocationChange = useCallback(
     (location: LocationData | null) => {
@@ -429,7 +389,7 @@ function App() {
     const text = `🇧🇷 Minha taxa como freelancer: ${formatCurrency(
       rates.regular
     )}/hora (${formatCurrency(
-      rates.regular / usdDisplayRate,
+      rates.regular / exchangeRate,
       "USD"
     )}/hora)\n\nCalcule a sua: ${shareUrl}`;
     trackEvent("share_results", {
@@ -486,7 +446,7 @@ function App() {
 
       <StickyResult
         result={result}
-        usdDisplayRate={usdDisplayRate}
+        usdDisplayRate={exchangeRate}
         exchangeRate={exchangeRate}
         adjustedTaxPercent={adjustedTaxPercent}
         clientCity={clientLocation?.namePortuguese || clientLocation?.city}
@@ -541,8 +501,6 @@ function App() {
         <PricingPhase
           taxRegime={taxRegime}
           onRegimeChange={handleRegimeChange}
-          taxPercent={taxPercent}
-          setTaxPercent={setTaxPercent}
           regimeComparison={regimeComparison}
           isExport={isExport}
           paymentRail={paymentRail}
@@ -583,27 +541,11 @@ function App() {
               )}
             </>
           }
-          advancedSlot={
-            <AdvancedSection
-              specialties={specialties}
-              setSpecialties={setSpecialties}
-              specialtyPremiumPercent={specialtyPremiumPercent}
-              industry={industry}
-              setIndustry={setIndustry}
-              clientType={clientType}
-              setClientType={setClientType}
-              segmentAdjustmentPercent={segmentAdjustmentPercent}
-              currencyBuffer={currencyBuffer}
-              setCurrencyBuffer={setCurrencyBuffer}
-              exchangeRate={exchangeRate}
-              usdDisplayRate={usdDisplayRate}
-            />
-          }
         />
 
         <InsightsSection
           rates={rates}
-          usdDisplayRate={usdDisplayRate}
+          usdDisplayRate={exchangeRate}
           dailyRevenue={dailyRevenue}
           weeklyRevenue={weeklyRevenue}
           monthlyRevenue={monthlyRevenue}
@@ -669,7 +611,7 @@ function App() {
           trackEvent("close_calculation_breakdown");
         }}
         result={result}
-        taxPercent={taxPercent}
+        taxPercent={domesticTaxPercent}
         savingsPercent={savingsPercent}
         extraPercent={extraPercent}
         exchangeRate={exchangeRate}

@@ -52,8 +52,6 @@ interface RegimeRow {
 interface PricingPhaseProps {
   taxRegime: TaxRegimeKey;
   onRegimeChange: (k: TaxRegimeKey) => void;
-  taxPercent: number;
-  setTaxPercent: (n: number) => void;
   regimeComparison: RegimeRow[];
   isExport: boolean;
   paymentRail: PaymentRailKey;
@@ -64,15 +62,11 @@ interface PricingPhaseProps {
   yearlyNet: number;
   /** Slot for the existing ClientLocationInput component */
   clientLocationSlot: ReactNode;
-  /** Slot for the existing AdvancedSection */
-  advancedSlot: ReactNode;
 }
 
 export function PricingPhase({
   taxRegime,
   onRegimeChange,
-  taxPercent,
-  setTaxPercent,
   regimeComparison,
   isExport,
   paymentRail,
@@ -82,8 +76,8 @@ export function PricingPhase({
   monthlyNet,
   yearlyNet,
   clientLocationSlot,
-  advancedSlot,
 }: PricingPhaseProps) {
+  const taxPercent = regimeComparison.find((r) => r.key === taxRegime)?.rate ?? 0;
   return (
     <section className="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-gray-200">
       <div className="flex items-center gap-2 mb-1">
@@ -199,25 +193,6 @@ export function PricingPhase({
             prefix="Imunidade na exportação"
           />
         )}
-        {taxRegime === "custom" && (
-          <div className="mt-3 flex items-center gap-3">
-            <label className="text-sm font-semibold text-gray-700 whitespace-nowrap">
-              Imposto:
-            </label>
-            <input
-              type="range"
-              min="0"
-              max="40"
-              step="0.1"
-              value={taxPercent}
-              onChange={(e) => setTaxPercent(Number(e.target.value))}
-              className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-            />
-            <span className="bg-blue-100 text-blue-600 px-3 py-1 rounded font-semibold text-sm min-w-14 text-center">
-              {taxPercent.toFixed(taxPercent % 1 === 0 ? 0 : 1)}%
-            </span>
-          </div>
-        )}
       </div>
 
       {/* Payment rails */}
@@ -256,9 +231,6 @@ export function PricingPhase({
           )}
         </p>
       </div>
-
-      {/* Advanced disclosure */}
-      <div className="mb-6">{advancedSlot}</div>
 
       {/* Bridge summary */}
       <div className="bg-gradient-to-r from-blue-600 to-purple-700 text-white rounded-xl p-4">

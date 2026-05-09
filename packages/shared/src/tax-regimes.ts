@@ -96,15 +96,6 @@ export const TAX_REGIMES = {
       },
     ] as LegalSource[],
   },
-  custom: {
-    label: "Personalizado",
-    rate: null,
-    rateExport: null,
-    hint: "Defina manualmente no slider abaixo.",
-    hintExport: "Defina manualmente no slider abaixo.",
-    revenueCapBRL: null,
-    sources: [] as LegalSource[],
-  },
 } as const;
 
 /**
@@ -154,17 +145,4 @@ export const TAX_REGIME_KEYS: readonly TaxRegimeKey[] = [
   "simples",
   "presumido",
   "pf",
-  "custom",
 ];
-
-export const detectRegimeFromRate = (
-  rate: number
-): TaxRegimeKey | undefined => {
-  for (const key of TAX_REGIME_KEYS) {
-    const regime = TAX_REGIMES[key];
-    if (regime.rate !== null && Math.abs(regime.rate - rate) < 0.01) {
-      return key;
-    }
-  }
-  return undefined;
-};

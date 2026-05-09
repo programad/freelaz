@@ -7,7 +7,9 @@ export interface FreelazConfig {
   monthlyExpenses: number;
   savingsPercent: number;
   extraPercent: number;
-  taxPercent: number;
+  taxRegime?: string;
+  /** @deprecated kept for backwards-compatibility with older saved configs */
+  taxPercent?: number;
   workHours: number;
   workDays: number;
   vacationDays: number;

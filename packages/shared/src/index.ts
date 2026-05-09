@@ -12,8 +12,6 @@ export * from "./insights.js";
 export * from "./calculator.js";
 export * from "./tax-regimes.js";
 export * from "./payment-rails.js";
-export * from "./specialties.js";
-export * from "./segments.js";
 export * from "./timezone.js";
 
 // Types (re-export for convenience)

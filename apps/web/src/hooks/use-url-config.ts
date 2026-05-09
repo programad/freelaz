@@ -9,7 +9,6 @@ const PARAM_KEYS: Record<string, "string" | "number"> = {
   expenses: "number",
   savings: "number",
   extras: "number",
-  tax: "number",
   hours: "number",
   days: "number",
   vacation: "number",
@@ -17,10 +16,6 @@ const PARAM_KEYS: Record<string, "string" | "number"> = {
   country: "string",
   regime: "string",
   rail: "string",
-  buffer: "number",
-  specialties: "string",
-  industry: "string",
-  clientType: "string",
 };
 
 export type UrlConfig = Partial<Record<keyof typeof PARAM_KEYS, Primitive>>;
