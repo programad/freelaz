@@ -643,8 +643,8 @@ function App() {
           onSuccess={(already) =>
             showSuccess(
               already
-                ? "Você já está cadastrado — obrigado!"
-                : "Cadastrado! Aguarde o próximo relatório mensal."
+                ? "Você já está na lista — obrigado!"
+                : "Você entrou na lista de espera. Avisamos assim que publicarmos."
             )
           }
           onError={(msg) => showError(msg)}

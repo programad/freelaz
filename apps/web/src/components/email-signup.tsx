@@ -42,8 +42,7 @@ export function EmailSignup({ onSuccess, onError, source }: EmailSignupProps) {
     return (
       <div className="max-w-xl mx-auto bg-gradient-to-r from-green-900/40 to-emerald-900/40 border border-green-700 rounded-xl p-4 text-center">
         <p className="text-green-200 text-sm">
-          ✅ Obrigado! Você receberá novidades quando publicarmos o relatório
-          mensal.
+          ✅ Você está na lista. Avisamos quando publicarmos algo.
         </p>
       </div>
     );
@@ -54,9 +53,13 @@ export function EmailSignup({ onSuccess, onError, source }: EmailSignupProps) {
       onSubmit={handleSubmit}
       className="max-w-xl mx-auto bg-gradient-to-r from-blue-900/40 to-indigo-900/40 border border-blue-800 rounded-xl p-4"
     >
-      <p className="text-sm text-gray-200 mb-3 text-center">
-        📨 Receba o relatório mensal de mercado para freelancers brasileiros
-        (sem spam, cancele quando quiser).
+      <p className="text-sm font-semibold text-gray-100 mb-1 text-center">
+        📨 Lista de espera (em breve)
+      </p>
+      <p className="text-xs text-gray-300 mb-3 text-center">
+        Estamos preparando um relatório mensal com taxas, mercado e dicas para
+        freelancers brasileiros. Ainda não publicamos — deixe seu email para
+        ser dos primeiros a receber. Sem spam, cancele quando quiser.
       </p>
       <div className="flex gap-2">
         <input
@@ -72,7 +75,7 @@ export function EmailSignup({ onSuccess, onError, source }: EmailSignupProps) {
           disabled={submitting}
           className="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50"
         >
-          {submitting ? "..." : "Quero receber"}
+          {submitting ? "..." : "Entrar na lista"}
         </button>
       </div>
     </form>
