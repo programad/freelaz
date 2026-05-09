@@ -56,7 +56,10 @@ export function StickyResult({
             <div className="text-lg font-bold text-green-400 leading-none">
               {formatCurrency(monthlyNet)}
             </div>
-            <div className="text-[11px] text-gray-500 leading-tight">
+            <div className="text-[11px] text-blue-300 leading-tight">
+              {formatCurrency(monthlyNet / usdDisplayRate, "USD")}
+            </div>
+            <div className="text-[10px] text-gray-500 leading-tight mt-0.5">
               {formatCurrency(yearlyNet)}/ano
             </div>
           </div>
@@ -68,6 +71,9 @@ export function StickyResult({
             </div>
             <div className="text-base font-bold text-green-400 leading-none">
               {formatCurrency(monthlyNet)}
+            </div>
+            <div className="text-[10px] text-blue-300 leading-tight">
+              {formatCurrency(monthlyNet / usdDisplayRate, "USD")}
             </div>
           </div>
 
