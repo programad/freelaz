@@ -42,7 +42,7 @@ export function InstallPrompt() {
   };
 
   return (
-    <div className="fixed bottom-4 right-4 z-40 max-w-sm bg-gray-800 border border-gray-700 rounded-xl p-4 shadow-2xl no-print">
+    <div className="fixed bottom-24 right-4 z-40 max-w-sm bg-gray-800 border border-gray-700 rounded-xl p-4 shadow-2xl no-print">
       <div className="text-sm text-gray-200 mb-2">
         📲 Instale o Freelaz para acesso rápido offline.
       </div>

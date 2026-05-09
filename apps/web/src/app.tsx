@@ -479,7 +479,7 @@ function App() {
       <GoogleAnalytics measurementId={gaId} debug={isDevelopment} />
 
       {isDevelopment && (
-        <div className="fixed bottom-4 left-4 bg-yellow-100 border border-yellow-400 text-yellow-800 px-3 py-2 rounded-lg text-xs font-medium shadow-lg no-print z-40">
+        <div className="fixed top-4 left-4 bg-yellow-100 border border-yellow-400 text-yellow-800 px-3 py-2 rounded-lg text-xs font-medium shadow-lg no-print z-40">
           📊 Analytics: {isProduction ? "Production" : "Development Mode"}
         </div>
       )}
@@ -508,7 +508,7 @@ function App() {
         </p>
       </header>
 
-      <main className="max-w-4xl mx-auto px-3 sm:px-6 pb-12 space-y-5">
+      <main className="max-w-4xl mx-auto px-3 sm:px-6 pb-28 sm:pb-32 space-y-5">
         <ProfilePhase
           profession={profession}
           setProfession={setProfession}
