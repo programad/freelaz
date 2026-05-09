@@ -9,6 +9,12 @@ interface StickyResultProps {
   onOpenBreakdown: () => void;
 }
 
+const FLOOR_LABEL = {
+  cost: "pelos seus custos",
+  market: "pelo mercado para seu nível",
+  location: "pelo cliente internacional",
+} as const;
+
 export function StickyResult({
   result,
   usdDisplayRate,
@@ -28,7 +34,7 @@ export function StickyResult({
           <div className="flex items-baseline gap-1">
             <div>
               <div className="text-[10px] uppercase tracking-wide text-gray-500 leading-none mb-0.5">
-                Sua taxa
+                Sua taxa · definida {FLOOR_LABEL[result.floorReason]}
               </div>
               <div className="text-xl sm:text-2xl font-bold text-white leading-none">
                 {formatCurrency(result.rates.regular)}

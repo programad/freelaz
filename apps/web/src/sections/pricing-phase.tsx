@@ -60,9 +60,19 @@ interface PricingPhaseProps {
   hourlyBRL: number;
   monthlyNet: number;
   yearlyNet: number;
+  costFloor: number;
+  marketFloor: number;
+  locationFloor: number;
+  floorReason: "cost" | "market" | "location";
   /** Slot for the existing ClientLocationInput component */
   clientLocationSlot: ReactNode;
 }
+
+const FLOOR_LABEL: Record<"cost" | "market" | "location", string> = {
+  cost: "Seus custos definem a taxa — está acima do mercado para o seu nível",
+  market: "O mercado para seu nível define a taxa — seus custos pediriam menos",
+  location: "O mercado do cliente define a taxa — paga melhor que mercado nacional",
+};
 
 export function PricingPhase({
   taxRegime,
@@ -75,6 +85,10 @@ export function PricingPhase({
   hourlyBRL,
   monthlyNet,
   yearlyNet,
+  costFloor,
+  marketFloor,
+  locationFloor,
+  floorReason,
   clientLocationSlot,
 }: PricingPhaseProps) {
   const taxPercent = regimeComparison.find((r) => r.key === taxRegime)?.rate ?? 0;
@@ -229,6 +243,56 @@ export function PricingPhase({
               da tarifa.
             </>
           )}
+        </p>
+      </div>
+
+      {/* Floors — what's pushing the rate */}
+      <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 mb-3">
+        <div className="text-xs uppercase tracking-wide text-gray-500 mb-2">
+          Pisos de preço
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm">
+          <div
+            className={`p-2 rounded-lg border ${
+              floorReason === "cost"
+                ? "bg-blue-50 border-blue-300"
+                : "bg-white border-gray-200"
+            }`}
+          >
+            <div className="text-xs text-gray-600">Pelos seus custos</div>
+            <div className="font-bold text-gray-900">
+              {formatCurrency(costFloor)}/h
+            </div>
+          </div>
+          <div
+            className={`p-2 rounded-lg border ${
+              floorReason === "market"
+                ? "bg-blue-50 border-blue-300"
+                : "bg-white border-gray-200"
+            }`}
+          >
+            <div className="text-xs text-gray-600">Pelo seu nível</div>
+            <div className="font-bold text-gray-900">
+              {formatCurrency(marketFloor)}/h
+            </div>
+          </div>
+          <div
+            className={`p-2 rounded-lg border ${
+              floorReason === "location"
+                ? "bg-blue-50 border-blue-300"
+                : "bg-white border-gray-200"
+            } ${locationFloor === 0 ? "opacity-50" : ""}`}
+          >
+            <div className="text-xs text-gray-600">Pelo cliente</div>
+            <div className="font-bold text-gray-900">
+              {locationFloor > 0
+                ? `${formatCurrency(locationFloor)}/h`
+                : "—"}
+            </div>
+          </div>
+        </div>
+        <p className="text-xs text-gray-600 mt-2">
+          {FLOOR_LABEL[floorReason]}.
         </p>
       </div>
 

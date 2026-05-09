@@ -50,6 +50,8 @@ export interface CalculatorRates {
   difficult: number;
 }
 
+export type FloorReason = "cost" | "market" | "location";
+
 export interface CalculatorResult {
   costOfLivingIndex: number;
   adjustedExpenses: number;
@@ -64,6 +66,12 @@ export interface CalculatorResult {
   baseRate: number;
   baseRateWithAdjustedTax: number;
   finalBaseRate: number;
+  /** BRL/hour floors that competed for the final rate */
+  costFloor: number;
+  marketFloor: number;
+  locationFloor: number;
+  /** Which floor determined the final rate */
+  floorReason: FloorReason;
   adjustedTaxPercent: number;
   rates: CalculatorRates;
   marketRange: { min: number; max: number };
@@ -169,17 +177,40 @@ export const calculate = (input: CalculatorInput): CalculatorResult => {
     ? calculateLocationAdjustment(baseRate, clientLocation, exchangeRate)
     : null;
 
-  // Tax adjustment for client export (export benefits) is now applied in
-  // the calling layer based on regime — we use taxPercent as-is here.
   const adjustedTaxPercent = taxPercent;
   const grossMonthlyNeedsAdjusted =
     netMonthlyNeeds / (1 - adjustedTaxPercent / 100);
   const baseRateWithAdjustedTax =
     grossMonthlyNeedsAdjusted / workingHoursPerMonth;
 
-  const preFeeBaseRate = locationAdjustment
+  // Market floor — what your seniority commands, regardless of cost.
+  // calculateMarketRates returns USD/h adjusted by cost-of-living index,
+  // so a Pernambuco senior fullstack quotes a bit lower than SP, which
+  // is the realistic Brazilian-market dynamic.
+  const marketRangeForFloor = calculateMarketRates(
+    profession,
+    experienceLevel,
+    costOfLivingIndex
+  );
+  const marketFloorBRL = marketRangeForFloor.min * exchangeRate;
+
+  // Three competing floors — final rate is the highest.
+  const costFloor = baseRateWithAdjustedTax;
+  const marketFloor = marketFloorBRL;
+  const locationFloor = locationAdjustment
     ? locationAdjustment.adjustedRate * exchangeRate
-    : baseRateWithAdjustedTax;
+    : 0;
+
+  const preFeeBaseRate = Math.max(costFloor, marketFloor, locationFloor);
+
+  let floorReason: FloorReason;
+  if (locationFloor >= costFloor && locationFloor >= marketFloor) {
+    floorReason = "location";
+  } else if (marketFloor > costFloor) {
+    floorReason = "market";
+  } else {
+    floorReason = "cost";
+  }
 
   const paymentFeeMultiplier =
     paymentFeePercent > 0 && paymentFeePercent < 100
@@ -223,11 +254,7 @@ export const calculate = (input: CalculatorInput): CalculatorResult => {
   const yearlyRevenue = finalBaseRate * workingHoursPerYear;
   const monthlyRevenue = yearlyRevenue / 12;
 
-  const marketRange = calculateMarketRates(
-    profession,
-    experienceLevel,
-    costOfLivingIndex
-  );
+  const marketRange = marketRangeForFloor;
   const avgRate = (marketRange.min + marketRange.max) / 2;
   const competitiveAnalysis = getCompetitivePosition(
     finalBaseRate / exchangeRate,
@@ -257,6 +284,10 @@ export const calculate = (input: CalculatorInput): CalculatorResult => {
     baseRate,
     baseRateWithAdjustedTax,
     finalBaseRate,
+    costFloor,
+    marketFloor,
+    locationFloor,
+    floorReason,
     adjustedTaxPercent,
     rates,
     marketRange,

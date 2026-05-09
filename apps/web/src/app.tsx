@@ -299,6 +299,10 @@ function App() {
     adjustedTaxPercent,
     rates,
     marketRange,
+    costFloor,
+    marketFloor,
+    locationFloor,
+    floorReason,
     dailyRevenue,
     weeklyRevenue,
     monthlyRevenue,
@@ -515,6 +519,10 @@ function App() {
           hourlyBRL={rates.regular}
           monthlyNet={monthlyNetFinal}
           yearlyNet={yearlyNetFinal}
+          costFloor={costFloor}
+          marketFloor={marketFloor}
+          locationFloor={locationFloor}
+          floorReason={floorReason}
           clientLocationSlot={
             <>
               <ClientLocationInput
