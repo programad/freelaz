@@ -135,14 +135,6 @@ export const calculateLocationAdjustment = (
   };
 };
 
-const adjustTaxForClient = (
-  baseTaxPercent: number,
-  clientLocation: LocationData | null | undefined
-): number => {
-  if (!clientLocation) return baseTaxPercent;
-  if (clientLocation.country === "Brazil") return baseTaxPercent;
-  return Math.max(baseTaxPercent * 0.7, 6);
-};
 
 export const calculate = (input: CalculatorInput): CalculatorResult => {
   const {
@@ -181,7 +173,9 @@ export const calculate = (input: CalculatorInput): CalculatorResult => {
     ? calculateLocationAdjustment(baseRate, clientLocation, exchangeRate)
     : null;
 
-  const adjustedTaxPercent = adjustTaxForClient(taxPercent, clientLocation);
+  // Tax adjustment for client export (export benefits) is now applied in
+  // the calling layer based on regime — we use taxPercent as-is here.
+  const adjustedTaxPercent = taxPercent;
   const grossMonthlyNeedsAdjusted =
     netMonthlyNeeds / (1 - adjustedTaxPercent / 100);
   const baseRateWithAdjustedTax =

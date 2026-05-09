@@ -6,6 +6,7 @@ import {
   TAX_REGIMES,
   TAX_REGIME_KEYS,
   detectRegimeFromRate,
+  getRegimeRate,
   PAYMENT_RAILS,
   getCityOffset,
   computeOverlap,
@@ -220,9 +221,11 @@ function App() {
   const handleRegimeChange = useCallback(
     (regime: TaxRegimeKey) => {
       setTaxRegime(regime);
-      const rate = TAX_REGIMES[regime].rate;
-      if (rate !== null) setTaxPercent(rate);
-      trackEvent("change_tax_regime", { regime, rate });
+      // Store the domestic rate as the slider value — the calculator
+      // applies the export discount based on regime + client.
+      const domesticRate = TAX_REGIMES[regime].rate;
+      if (domesticRate !== null) setTaxPercent(domesticRate);
+      trackEvent("change_tax_regime", { regime, rate: domesticRate });
     },
     [trackEvent]
   );
@@ -299,12 +302,16 @@ function App() {
   }, [trackEvent]);
 
   const paymentFeePercent = PAYMENT_RAILS[paymentRail].feePercent;
-  // Buffer is a UX nudge: shows USD as if dollar were that much weaker so
-  // the freelancer quotes more to protect against FX drops. BRL math uses
-  // the real exchangeRate; only USD-side display divides by this.
   const usdDisplayRate = exchangeRate * (1 - currencyBuffer / 100);
   const specialtyPremiumPercent = sumSpecialtyPremium(specialties);
   const segmentAdjustmentPercent = segmentPremium(industry, clientType);
+
+  // International clients trigger export tax benefits (ISS+PIS+COFINS exempt
+  // for Simples; PIS+COFINS exempt for Lucro Presumido). The effective tax
+  // depends on the chosen regime, not a flat discount.
+  const isExport = !!clientLocation && clientLocation.country !== "Brazil";
+  const regimeRate = getRegimeRate(taxRegime, isExport);
+  const effectiveTaxPercent = regimeRate ?? taxPercent;
 
   const result = calculate({
     profession,
@@ -313,7 +320,7 @@ function App() {
     monthlyExpenses,
     savingsPercent,
     extraPercent,
-    taxPercent,
+    taxPercent: effectiveTaxPercent,
     workHours,
     workDays,
     vacationDays,
@@ -339,24 +346,25 @@ function App() {
   } = result;
 
   // Compare regimes at a fixed hourly rate (what the user is currently
-  // charging) so the variation in net take-home is visible — picking MEI vs
-  // PF should clearly show the freelancer keeps more, not the same number.
+  // charging) so the variation in net take-home is visible. Uses the
+  // export rate if the client is international (since ISS+PIS+COFINS
+  // are exempt) — Simples drops from ~12% to ~4.5%, Presumido to ~9%.
   const regimeComparison = useMemo(() => {
     return TAX_REGIME_KEYS.filter((key) => key !== "custom").map((key) => {
       const regime = TAX_REGIMES[key];
-      const regimeRate = regime.rate ?? taxPercent;
+      const rateForClient = getRegimeRate(key, isExport) ?? taxPercent;
       const yearlyGross = result.yearlyRevenue;
-      const yearlyNet = yearlyGross * (1 - regimeRate / 100);
+      const yearlyNet = yearlyGross * (1 - rateForClient / 100);
       return {
         key,
         label: regime.label,
-        rate: regimeRate,
+        rate: rateForClient,
         hourlyBRL: result.rates.regular,
         monthlyNet: yearlyNet / 12,
         yearlyNet,
       };
     });
-  }, [result, taxPercent]);
+  }, [result, taxPercent, isExport]);
 
   const handleLocationChange = useCallback(
     (location: LocationData | null) => {
@@ -536,6 +544,7 @@ function App() {
           taxPercent={taxPercent}
           setTaxPercent={setTaxPercent}
           regimeComparison={regimeComparison}
+          isExport={isExport}
           paymentRail={paymentRail}
           setPaymentRail={(r) => {
             setPaymentRail(r);

@@ -3,6 +3,7 @@ import {
   TAX_REGIME_KEYS,
   PAYMENT_RAILS,
   PAYMENT_RAIL_KEYS,
+  getRegimeHint,
   formatCurrency,
   type TaxRegimeKey,
   type PaymentRailKey,
@@ -24,6 +25,7 @@ interface PricingPhaseProps {
   taxPercent: number;
   setTaxPercent: (n: number) => void;
   regimeComparison: RegimeRow[];
+  isExport: boolean;
   paymentRail: PaymentRailKey;
   setPaymentRail: (r: PaymentRailKey) => void;
   paymentFeePercent: number;
@@ -42,6 +44,7 @@ export function PricingPhase({
   taxPercent,
   setTaxPercent,
   regimeComparison,
+  isExport,
   paymentRail,
   setPaymentRail,
   paymentFeePercent,
@@ -64,19 +67,40 @@ export function PricingPhase({
         final.
       </p>
 
-      {/* Regime — single row of cards (selector + comparison) */}
+      {/* Client location FIRST — affects regime rates via export benefits */}
+      <div className="mb-6">{clientLocationSlot}</div>
+
+      {/* Regime — rates adapt to client (export benefits) */}
       <div className="mb-6">
-        <h3 className="font-semibold text-gray-800 mb-2">🧾 Regime tributário</h3>
+        <div className="flex items-baseline justify-between mb-2">
+          <h3 className="font-semibold text-gray-800">🧾 Regime tributário</h3>
+          {isExport && (
+            <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded">
+              Exportação de serviços
+            </span>
+          )}
+        </div>
         <p className="text-xs text-gray-600 mb-3">
           Toque para escolher. Cobrando{" "}
           <strong>{formatCurrency(hourlyBRL)}/h</strong>, isto é o que você
           leva pra casa em cada regime.
+          {isExport && (
+            <>
+              {" "}
+              Como o cliente é estrangeiro, ISS, PIS e COFINS não incidem.
+            </>
+          )}
         </p>
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
           {TAX_REGIME_KEYS.map((key) => {
             const regime = TAX_REGIMES[key];
             const isActive = taxRegime === key;
             const compare = regimeComparison.find((r) => r.key === key);
+            const showsExportRate =
+              isExport &&
+              regime.rate !== null &&
+              regime.rateExport !== null &&
+              regime.rateExport !== regime.rate;
             return (
               <button
                 key={key}
@@ -95,9 +119,22 @@ export function PricingPhase({
                   {regime.label}
                 </div>
                 <div className="text-xs text-gray-500 mb-2">
-                  {regime.rate !== null
-                    ? `${regime.rate}% imposto`
-                    : "imposto livre"}
+                  {compare ? (
+                    showsExportRate ? (
+                      <>
+                        <span className="text-emerald-700 font-semibold">
+                          {compare.rate}%
+                        </span>{" "}
+                        <span className="line-through text-gray-400">
+                          {regime.rate}%
+                        </span>
+                      </>
+                    ) : (
+                      `${compare.rate}% imposto`
+                    )
+                  ) : (
+                    "imposto livre"
+                  )}
                 </div>
                 {compare ? (
                   <>
@@ -120,7 +157,7 @@ export function PricingPhase({
           })}
         </div>
         <p className="text-xs text-gray-600 mt-3">
-          {TAX_REGIMES[taxRegime].hint}
+          {getRegimeHint(taxRegime, isExport)}
         </p>
         {taxRegime === "custom" && (
           <div className="mt-3 flex items-center gap-3">
@@ -142,9 +179,6 @@ export function PricingPhase({
           </div>
         )}
       </div>
-
-      {/* Client location */}
-      <div className="mb-6">{clientLocationSlot}</div>
 
       {/* Payment rails */}
       <div className="mb-6">
