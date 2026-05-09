@@ -7,7 +7,6 @@ import { z } from "zod";
 import { professionData, stateData } from "@freelaz/shared";
 import locationRoutes from "./routes/location";
 import submissionsRoutes from "./routes/submissions";
-import emailRoutes from "./routes/email";
 
 type Bindings = {
   DB: D1Database;
@@ -137,6 +136,5 @@ app.post(
 
 app.route("/", locationRoutes);
 app.route("/", submissionsRoutes);
-app.route("/", emailRoutes);
 
 export default app;

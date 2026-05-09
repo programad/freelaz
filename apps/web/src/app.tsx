@@ -28,7 +28,6 @@ import {
   useGoogleAnalytics,
 } from "./components/google-analytics";
 import { Footer } from "./components/footer";
-import { EmailSignup } from "./components/email-signup";
 import { InstallPrompt } from "./components/install-prompt";
 import {
   useLocalStorageConfig,
@@ -587,18 +586,6 @@ function App() {
             Relatos da comunidade
           </a>
         </div>
-
-        <EmailSignup
-          source="calculator-footer"
-          onSuccess={(already) =>
-            showSuccess(
-              already
-                ? "Você já está na lista — obrigado!"
-                : "Você entrou na lista de espera. Avisamos assim que publicarmos."
-            )
-          }
-          onError={(msg) => showError(msg)}
-        />
       </main>
 
       <Footer />
