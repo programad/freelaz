@@ -5,10 +5,40 @@ import {
   PAYMENT_RAIL_KEYS,
   getRegimeHint,
   formatCurrency,
+  EXPORT_SOURCES,
   type TaxRegimeKey,
   type PaymentRailKey,
+  type LegalSource,
 } from "@freelaz/shared";
 import type { ReactNode } from "react";
+
+function SourceLinks({
+  sources,
+  prefix,
+}: {
+  sources: readonly LegalSource[];
+  prefix: string;
+}) {
+  if (sources.length === 0) return null;
+  return (
+    <p className="text-xs text-gray-500 mt-1">
+      <span className="font-semibold">{prefix}: </span>
+      {sources.map((s, i) => (
+        <span key={s.url}>
+          {i > 0 && <span className="text-gray-400"> · </span>}
+          <a
+            href={s.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:text-blue-800 underline"
+          >
+            {s.label}
+          </a>
+        </span>
+      ))}
+    </p>
+  );
+}
 
 interface RegimeRow {
   key: TaxRegimeKey;
@@ -159,6 +189,16 @@ export function PricingPhase({
         <p className="text-xs text-gray-600 mt-3">
           {getRegimeHint(taxRegime, isExport)}
         </p>
+        <SourceLinks
+          sources={TAX_REGIMES[taxRegime].sources}
+          prefix="Fontes"
+        />
+        {isExport && (
+          <SourceLinks
+            sources={EXPORT_SOURCES}
+            prefix="Imunidade na exportação"
+          />
+        )}
         {taxRegime === "custom" && (
           <div className="mt-3 flex items-center gap-3">
             <label className="text-sm font-semibold text-gray-700 whitespace-nowrap">
