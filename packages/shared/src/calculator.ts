@@ -5,6 +5,7 @@ import {
 } from "./market-rates.js";
 import type { ProfessionKey, ExperienceLevel } from "./profession-data.js";
 import type { LocationData } from "./data/location-data.js";
+import { RATE_MULTIPLIERS } from "./constants.js";
 
 export interface CalculatorInput {
   profession: ProfessionKey;
@@ -84,13 +85,6 @@ export interface CalculatorResult {
   monthlyRevenue: number;
   yearlyRevenue: number;
 }
-
-const RATE_MULTIPLIERS: CalculatorRates = {
-  regular: 1.0,
-  revision: 1.25,
-  rush: 1.5,
-  difficult: 2.0,
-};
 
 export const calculateLocationAdjustment = (
   baseRateBRL: number,

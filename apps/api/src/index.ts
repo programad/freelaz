@@ -2,9 +2,13 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { prettyJSON } from "hono/pretty-json";
-import { zValidator } from "@hono/zod-validator";
-import { z } from "zod";
-import { professionData, stateData } from "@freelaz/shared";
+import {
+  professionData,
+  stateData,
+  FALLBACK_EXCHANGE_RATE,
+  EXCHANGE_RATE_CACHE_KEY,
+  EXCHANGE_RATE_TTL_SECONDS,
+} from "@freelaz/shared";
 import locationRoutes from "./routes/location";
 import submissionsRoutes from "./routes/submissions";
 
@@ -51,10 +55,6 @@ app.get("/api/professions", (c) => {
 app.get("/api/states", (c) => {
   return c.json(stateData);
 });
-
-const EXCHANGE_RATE_CACHE_KEY = "exchange-rate:usd-brl";
-const EXCHANGE_RATE_TTL_SECONDS = 600;
-const FALLBACK_EXCHANGE_RATE = 5.57;
 
 app.get("/api/exchange-rate", async (c) => {
   const kv = c.env.LOCATION_CACHE;
@@ -103,36 +103,6 @@ app.get("/api/exchange-rate", async (c) => {
     });
   }
 });
-
-const calculationEventSchema = z.object({
-  profession: z.string().min(1).max(50),
-  state: z.string().min(1).max(10),
-  experienceLevel: z.enum(["junior", "pleno", "senior", "specialist"]),
-  monthlyExpenses: z.number().nonnegative().max(1_000_000),
-  hourlyRateBRL: z.number().nonnegative().max(10_000),
-  hourlyRateUSD: z.number().nonnegative().max(10_000),
-  clientCountry: z.string().max(80).optional(),
-  clientCity: z.string().max(80).optional(),
-  exchangeRate: z.number().positive().max(100).optional(),
-});
-
-app.post(
-  "/api/analytics/calculation",
-  zValidator("json", calculationEventSchema, (result, c) => {
-    if (!result.success) {
-      return c.json(
-        { error: "Invalid payload", issues: result.error.issues },
-        400
-      );
-    }
-  }),
-  (c) => {
-    const event = c.req.valid("json");
-    console.log("Analytics calculation event:", event);
-    // TODO: persist to D1 once the binding is configured
-    return c.json({ success: true });
-  }
-);
 
 app.route("/", locationRoutes);
 app.route("/", submissionsRoutes);
