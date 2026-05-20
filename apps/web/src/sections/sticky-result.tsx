@@ -4,6 +4,7 @@ interface StickyResultProps {
   result: CalculatorResult;
   usdDisplayRate: number;
   exchangeRate: number;
+  isRateStale?: boolean;
   adjustedTaxPercent: number;
   clientCity?: string;
   onOpenBreakdown: () => void;
@@ -46,6 +47,7 @@ export function StickyResult({
   result,
   usdDisplayRate,
   exchangeRate,
+  isRateStale = false,
   adjustedTaxPercent,
   clientCity,
   onOpenBreakdown,
@@ -118,7 +120,17 @@ export function StickyResult({
               <div className="text-[10px] uppercase tracking-wide text-gray-500 leading-none">
                 USD/BRL
               </div>
-              <div className="text-xs font-mono text-gray-200">
+              <div
+                className={`text-xs font-mono ${
+                  isRateStale ? "text-amber-300" : "text-gray-200"
+                }`}
+                title={
+                  isRateStale
+                    ? "Cotação aproximada — API indisponível"
+                    : undefined
+                }
+              >
+                {isRateStale && <span aria-hidden="true">⚠ </span>}
                 {exchangeRate.toFixed(2)}
               </div>
             </div>

@@ -9,6 +9,7 @@ import {
   PAYMENT_RAILS,
   getCityOffset,
   computeOverlap,
+  FALLBACK_EXCHANGE_RATE,
   type ProfessionKey,
   type ExperienceLevel,
   type StateKey,
@@ -48,7 +49,10 @@ function App() {
   const [showCalculationBreakdown, setShowCalculationBreakdown] =
     useState(false);
   const [showSubmission, setShowSubmission] = useState(false);
-  const [exchangeRate, setExchangeRate] = useState(5.57);
+  const [exchangeRate, setExchangeRate] = useState(FALLBACK_EXCHANGE_RATE);
+  const [exchangeRateSource, setExchangeRateSource] = useState<
+    "live" | "fallback"
+  >("fallback");
 
   // Client location state
   const [clientLocation, setClientLocation] = useState<LocationData | null>(
@@ -258,6 +262,7 @@ function App() {
       const result = (await fromApi()) ?? (await fromAwesomeApi());
       if (result) {
         setExchangeRate(result.rate);
+        setExchangeRateSource("live");
         trackEvent("exchange_rate_fetch_success", {
           exchange_rate: result.rate,
           source: result.source,
@@ -451,6 +456,7 @@ function App() {
         result={result}
         usdDisplayRate={exchangeRate}
         exchangeRate={exchangeRate}
+        isRateStale={exchangeRateSource === "fallback"}
         adjustedTaxPercent={adjustedTaxPercent}
         clientCity={clientLocation?.namePortuguese || clientLocation?.city}
         onOpenBreakdown={() => {

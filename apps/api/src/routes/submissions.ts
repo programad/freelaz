@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { zValidator } from "@hono/zod-validator";
-import { z } from "zod";
+import { submissionSchema, type SubmissionPayload } from "@freelaz/shared";
 
 type Bindings = {
   LOCATION_CACHE?: KVNamespace;
@@ -11,21 +11,6 @@ const app = new Hono<{ Bindings: Bindings }>();
 
 const INDEX_KEY = "submissions:index";
 const MAX_INDEX_SIZE = 1000;
-
-const submissionSchema = z.object({
-  profession: z.string().min(1).max(50),
-  experienceLevel: z.enum(["junior", "pleno", "senior", "specialist"]),
-  state: z.string().min(1).max(10),
-  hourlyRateBRL: z.number().nonnegative().max(10_000),
-  hourlyRateUSD: z.number().nonnegative().max(10_000),
-  clientCountry: z.string().max(80).optional(),
-  industry: z.string().max(80).optional(),
-  yearsExperience: z.number().int().min(0).max(60).optional(),
-  taxRegime: z.string().max(20).optional(),
-  notes: z.string().max(280).optional(),
-});
-
-export type SubmissionPayload = z.infer<typeof submissionSchema>;
 
 interface StoredSubmission extends SubmissionPayload {
   id: string;

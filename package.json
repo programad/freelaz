@@ -12,6 +12,7 @@
     "build": "npm run build --workspace=apps/web",
     "preview": "npm run preview --workspace=apps/web",
     "lint": "npm run lint --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
     "type-check": "npm run type-check --workspaces --if-present",
     "sync-env": "node scripts/sync-env.js",
     "dev:api": "npm run dev --workspace=apps/api",

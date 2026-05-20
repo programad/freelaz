@@ -3,6 +3,8 @@ export * from "./profession-data.js";
 export * from "./state-data.js";
 export { costOfLivingInfo, multiplierExplanation } from "./cost-of-living-info.js";
 export * from "./data/location-data.js";
+export * from "./constants.js";
+export * from "./schemas.js";
 
 // Utility exports
 export * from "./text-utils.js";
